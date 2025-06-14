@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useUpdateCategory, Category } from "@/hooks/useCategories";
+import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,11 @@ interface EditCategoryDialogProps {
 export const EditCategoryDialog = ({ category, open, onOpenChange, onSuccess }: EditCategoryDialogProps) => {
   const { register, handleSubmit, setValue, watch, reset } = useForm<CategoryFormData>();
   const updateCategory = useUpdateCategory();
+  const { hasPermission } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check if user has permission to manage products (which includes categories)
+  const canEdit = hasPermission('manage_products');
 
   useEffect(() => {
     if (category) {
@@ -38,7 +43,7 @@ export const EditCategoryDialog = ({ category, open, onOpenChange, onSuccess }: 
   }, [category, reset]);
 
   const onSubmit = async (data: CategoryFormData) => {
-    if (!category) return;
+    if (!category || !canEdit) return;
     
     setIsSubmitting(true);
     try {
@@ -51,6 +56,24 @@ export const EditCategoryDialog = ({ category, open, onOpenChange, onSuccess }: 
       setIsSubmitting(false);
     }
   };
+
+  if (!canEdit) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Acesso Negado</DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-4">
+            <p>Você não tem permissão para editar categorias.</p>
+          </div>
+          <Button onClick={() => onOpenChange(false)} className="w-full">
+            Fechar
+          </Button>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

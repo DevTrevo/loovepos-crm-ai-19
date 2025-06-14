@@ -2,19 +2,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Category {
   id: string;
   name: string;
   description?: string;
   status: 'active' | 'inactive';
+  company_id?: string;
   created_at: string;
   updated_at: string;
 }
 
 export const useCategories = () => {
+  const { company } = useAuth();
+
   return useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', company?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('categories')
@@ -24,18 +28,24 @@ export const useCategories = () => {
       if (error) throw error;
       return data as Category[];
     },
+    enabled: !!company?.id,
   });
 };
 
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { company } = useAuth();
 
   return useMutation({
-    mutationFn: async (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (category: Omit<Category, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+      if (!company?.id) {
+        throw new Error('Empresa não encontrada');
+      }
+
       const { data, error } = await supabase
         .from('categories')
-        .insert([category])
+        .insert([{ ...category, company_id: company.id }])
         .select()
         .single();
       

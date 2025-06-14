@@ -48,9 +48,104 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          company_id: string | null
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      backups: {
+        Row: {
+          backup_type: string
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          file_path: string
+          file_size: number | null
+          id: string
+          status: string | null
+        }
+        Insert: {
+          backup_type: string
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_path: string
+          file_size?: number | null
+          id?: string
+          status?: string | null
+        }
+        Update: {
+          backup_type?: string
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backups_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calls: {
         Row: {
           client_id: string | null
+          company_id: string | null
           created_at: string
           duration_minutes: number | null
           id: string
@@ -62,6 +157,7 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          company_id?: string | null
           created_at?: string
           duration_minutes?: number | null
           id?: string
@@ -73,6 +169,7 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          company_id?: string | null
           created_at?: string
           duration_minutes?: number | null
           id?: string
@@ -90,10 +187,18 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "calls_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
         ]
       }
       categories: {
         Row: {
+          company_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -102,6 +207,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -110,6 +216,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -117,13 +224,22 @@ export type Database = {
           status?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clients: {
         Row: {
           address: string | null
           birth_date: string | null
           city: string | null
+          company_id: string | null
           cpf: string | null
           created_at: string
           email: string | null
@@ -140,6 +256,7 @@ export type Database = {
           address?: string | null
           birth_date?: string | null
           city?: string | null
+          company_id?: string | null
           cpf?: string | null
           created_at?: string
           email?: string | null
@@ -156,6 +273,7 @@ export type Database = {
           address?: string | null
           birth_date?: string | null
           city?: string | null
+          company_id?: string | null
           cpf?: string | null
           created_at?: string
           email?: string | null
@@ -168,7 +286,116 @@ export type Database = {
           updated_at?: string
           zip_code?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "clients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          address: string | null
+          city: string | null
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          phone: string | null
+          state: string | null
+          status: string | null
+          subscription_plan: string | null
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          state?: string | null
+          status?: string | null
+          subscription_plan?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          state?: string | null
+          status?: string | null
+          subscription_plan?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
         Relationships: []
+      }
+      company_users: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          joined_at: string | null
+          permissions: Json | null
+          role: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          joined_at?: string | null
+          permissions?: Json | null
+          role?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          joined_at?: string | null
+          permissions?: Json | null
+          role?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_users_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_campaign_recipients: {
         Row: {
@@ -221,6 +448,7 @@ export type Database = {
       email_campaigns: {
         Row: {
           clicked_count: number | null
+          company_id: string | null
           content: string
           created_at: string
           id: string
@@ -234,6 +462,7 @@ export type Database = {
         }
         Insert: {
           clicked_count?: number | null
+          company_id?: string | null
           content: string
           created_at?: string
           id?: string
@@ -247,6 +476,7 @@ export type Database = {
         }
         Update: {
           clicked_count?: number | null
+          company_id?: string | null
           content?: string
           created_at?: string
           id?: string
@@ -258,13 +488,22 @@ export type Database = {
           subject?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "email_campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
           barcode: string | null
           category: string
           category_id: string | null
+          company_id: string | null
           cost_price: number | null
           created_at: string
           description: string | null
@@ -282,6 +521,7 @@ export type Database = {
           barcode?: string | null
           category: string
           category_id?: string | null
+          company_id?: string | null
           cost_price?: number | null
           created_at?: string
           description?: string | null
@@ -299,6 +539,7 @@ export type Database = {
           barcode?: string | null
           category?: string
           category_id?: string | null
+          company_id?: string | null
           cost_price?: number | null
           created_at?: string
           description?: string | null
@@ -321,6 +562,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "products_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
@@ -331,27 +579,53 @@ export type Database = {
       }
       profiles: {
         Row: {
+          company_id: string | null
           created_at: string
           full_name: string | null
           id: string
+          is_active: boolean | null
+          last_login: string | null
+          permissions: Json | null
+          phone: string | null
+          position: string | null
           role: string | null
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           full_name?: string | null
           id: string
+          is_active?: boolean | null
+          last_login?: string | null
+          permissions?: Json | null
+          phone?: string | null
+          position?: string | null
           role?: string | null
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          permissions?: Json | null
+          phone?: string | null
+          position?: string | null
           role?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       purchase_items: {
         Row: {
@@ -403,6 +677,7 @@ export type Database = {
       }
       purchases: {
         Row: {
+          company_id: string | null
           created_at: string
           expected_date: string | null
           id: string
@@ -415,6 +690,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           expected_date?: string | null
           id?: string
@@ -427,6 +703,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           expected_date?: string | null
           id?: string
@@ -439,6 +716,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "purchases_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchases_supplier_id_fkey"
             columns: ["supplier_id"]
@@ -496,6 +780,7 @@ export type Database = {
       sales: {
         Row: {
           client_id: string | null
+          company_id: string | null
           created_at: string
           discount_amount: number | null
           id: string
@@ -507,6 +792,7 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          company_id?: string | null
           created_at?: string
           discount_amount?: number | null
           id?: string
@@ -518,6 +804,7 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          company_id?: string | null
           created_at?: string
           discount_amount?: number | null
           id?: string
@@ -535,10 +822,18 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sales_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
         ]
       }
       stock_movements: {
         Row: {
+          company_id: string | null
           created_at: string
           id: string
           movement_type: string
@@ -550,6 +845,7 @@ export type Database = {
           reference_type: string | null
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           id?: string
           movement_type: string
@@ -561,6 +857,7 @@ export type Database = {
           reference_type?: string | null
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           id?: string
           movement_type?: string
@@ -572,6 +869,13 @@ export type Database = {
           reference_type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stock_movements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_movements_product_id_fkey"
             columns: ["product_id"]
@@ -586,6 +890,7 @@ export type Database = {
           address: string | null
           city: string | null
           cnpj: string | null
+          company_id: string | null
           contact_person: string | null
           created_at: string
           email: string | null
@@ -602,6 +907,7 @@ export type Database = {
           address?: string | null
           city?: string | null
           cnpj?: string | null
+          company_id?: string | null
           contact_person?: string | null
           created_at?: string
           email?: string | null
@@ -618,6 +924,7 @@ export type Database = {
           address?: string | null
           city?: string | null
           cnpj?: string | null
+          company_id?: string | null
           contact_person?: string | null
           created_at?: string
           email?: string | null
@@ -630,7 +937,15 @@ export type Database = {
           updated_at?: string
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_settings: {
         Row: {
@@ -673,6 +988,14 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_user_company_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      user_has_permission: {
+        Args: { permission_name: string }
+        Returns: boolean
       }
     }
     Enums: {
