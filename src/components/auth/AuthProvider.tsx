@@ -25,55 +25,98 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [companyUser, setCompanyUser] = useState<CompanyUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Function to load user data safely
+  const handleUserDataLoad = async (userId: string) => {
+    try {
+      console.log('Loading user data for:', userId);
+      const userData = await loadUserData(userId);
+      setProfile(userData.profile);
+      setCompany(userData.company);
+      setCompanyUser(userData.companyUser);
+      console.log('User data loaded successfully:', userData);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      // Reset states on error
+      setProfile(null);
+      setCompany(null);
+      setCompanyUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Set up auth state listener
+    console.log('Setting up auth state listener...');
+    
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+        
+        // Update session and user synchronously
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          const userData = await loadUserData(session.user.id);
-          setProfile(userData.profile);
-          setCompany(userData.company);
-          setCompanyUser(userData.companyUser);
+          // Defer user data loading to prevent deadlocks
+          setTimeout(() => {
+            handleUserDataLoad(session.user.id);
+          }, 0);
         } else {
+          // Clear states immediately when no session
           setProfile(null);
           setCompany(null);
           setCompanyUser(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadUserData(session.user.id).then((userData) => {
-          setProfile(userData.profile);
-          setCompany(userData.company);
-          setCompanyUser(userData.companyUser);
+    // THEN check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
           setLoading(false);
-        });
-      } else {
+          return;
+        }
+
+        console.log('Initial session check:', session?.user?.id);
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await handleUserDataLoad(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
         setLoading(false);
       }
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      console.log('Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    console.log('Signing in user:', email);
     return await signInUser(email, password);
   };
 
   const signUp = async (email: string, password: string, fullName?: string, companyName?: string) => {
+    console.log('Signing up user:', email);
     return await signUpUser(email, password, fullName, companyName);
   };
 
   const signOut = async () => {
+    console.log('Signing out user');
     setProfile(null);
     setCompany(null);
     setCompanyUser(null);
@@ -87,6 +130,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const isRole = (role: string): boolean => {
     return checkRole(companyUser, role);
   };
+
+  console.log('Auth Provider State:', { 
+    loading, 
+    user: user?.id, 
+    profile: profile?.id, 
+    company: company?.id 
+  });
 
   return (
     <AuthContext.Provider value={{

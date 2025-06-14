@@ -28,6 +28,7 @@ export const AuthForm = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Starting sign in process...');
     setIsLoading(true);
     setError(null);
 
@@ -35,6 +36,7 @@ export const AuthForm = () => {
       const { error } = await signIn(signInData.email, signInData.password);
       
       if (error) {
+        console.error('Sign in error:', error);
         if (error.message.includes('Invalid login credentials')) {
           setError('Email ou senha inválidos');
         } else if (error.message.includes('Email not confirmed')) {
@@ -43,9 +45,14 @@ export const AuthForm = () => {
           setError(error.message);
         }
       } else {
-        window.location.href = '/dashboard';
+        console.log('Sign in successful, redirecting...');
+        // Use a timeout to ensure auth state is updated before redirect
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 100);
       }
     } catch (err) {
+      console.error('Unexpected sign in error:', err);
       setError('Erro inesperado. Tente novamente.');
     } finally {
       setIsLoading(false);
@@ -54,6 +61,7 @@ export const AuthForm = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Starting sign up process...');
     setIsLoading(true);
     setError(null);
     setSuccess(null);
@@ -62,6 +70,7 @@ export const AuthForm = () => {
       const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName);
       
       if (error) {
+        console.error('Sign up error:', error);
         if (error.message.includes('User already registered')) {
           setError('Este email já está cadastrado');
         } else if (error.message.includes('Password should be at least')) {
@@ -70,10 +79,12 @@ export const AuthForm = () => {
           setError(error.message);
         }
       } else {
+        console.log('Sign up successful');
         setSuccess('Conta criada com sucesso! Verifique seu email para confirmar.');
         setSignUpData({ email: '', password: '', fullName: '' });
       }
     } catch (err) {
+      console.error('Unexpected sign up error:', err);
       setError('Erro inesperado. Tente novamente.');
     } finally {
       setIsLoading(false);
@@ -104,6 +115,7 @@ export const AuthForm = () => {
                     placeholder="seu@email.com"
                     value={signInData.email}
                     onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
+                    disabled={isLoading}
                     required
                   />
                 </div>
@@ -115,12 +127,13 @@ export const AuthForm = () => {
                     placeholder="••••••••"
                     value={signInData.password}
                     onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+                    disabled={isLoading}
                     required
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Entrar
+                  {isLoading ? 'Entrando...' : 'Entrar'}
                 </Button>
               </form>
             </TabsContent>
@@ -135,6 +148,7 @@ export const AuthForm = () => {
                     placeholder="Seu nome completo"
                     value={signUpData.fullName}
                     onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })}
+                    disabled={isLoading}
                     required
                   />
                 </div>
@@ -146,6 +160,7 @@ export const AuthForm = () => {
                     placeholder="seu@email.com"
                     value={signUpData.email}
                     onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+                    disabled={isLoading}
                     required
                   />
                 </div>
@@ -157,12 +172,13 @@ export const AuthForm = () => {
                     placeholder="••••••••"
                     value={signUpData.password}
                     onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+                    disabled={isLoading}
                     required
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Cadastrar
+                  {isLoading ? 'Cadastrando...' : 'Cadastrar'}
                 </Button>
               </form>
             </TabsContent>
