@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -60,30 +59,44 @@ export const useCreateProduct = () => {
 
   return useMutation({
     mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+      console.log('useCreateProduct mutation called');
+      console.log('Company available:', company);
+      console.log('Product data received:', product);
+
       if (!company?.id) {
         console.error('No company ID available for product creation');
         throw new Error('Empresa não encontrada. Faça logout e login novamente.');
       }
 
       console.log('Creating product for company:', company.id);
-      console.log('Product data:', product);
 
-      // Garantir que campos opcionais tenham valores apropriados
+      // Validação de dados obrigatórios
+      if (!product.name || product.name.trim() === '') {
+        throw new Error('Nome do produto é obrigatório');
+      }
+
+      if (!product.price || product.price <= 0) {
+        throw new Error('Preço deve ser maior que zero');
+      }
+
+      // Preparar dados para inserção
       const productData = {
-        name: product.name,
+        name: product.name.trim(),
         description: product.description || null,
-        price: product.price,
-        cost_price: product.cost_price || null,
+        price: Number(product.price),
+        cost_price: product.cost_price ? Number(product.cost_price) : null,
         category: product.category || 'Geral',
         category_id: product.category_id || null,
         supplier_id: product.supplier_id || null,
-        stock_quantity: product.stock_quantity || 0,
-        min_stock: product.min_stock || 5,
+        stock_quantity: Number(product.stock_quantity) || 0,
+        min_stock: Number(product.min_stock) || 5,
         barcode: product.barcode || null,
         sku: product.sku || null,
         status: product.status || 'active',
         company_id: company.id
       };
+
+      console.log('Final product data for insertion:', productData);
 
       const { data, error } = await supabase
         .from('products')
@@ -93,13 +106,14 @@ export const useCreateProduct = () => {
       
       if (error) {
         console.error('Error creating product:', error);
-        throw error;
+        throw new Error(`Erro ao criar produto: ${error.message}`);
       }
       
       console.log('Product created successfully:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Product creation successful:', data);
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast({
         title: "Produto criado",
@@ -110,7 +124,7 @@ export const useCreateProduct = () => {
       console.error('Create product mutation error:', error);
       toast({
         title: "Erro",
-        description: "Erro ao criar produto: " + error.message,
+        description: error.message || "Erro ao criar produto",
         variant: "destructive",
       });
     },

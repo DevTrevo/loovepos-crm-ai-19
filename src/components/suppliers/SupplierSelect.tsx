@@ -1,6 +1,12 @@
 
 import { useSuppliers } from "@/hooks/useSuppliers";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SupplierSelectProps {
   value?: string;
@@ -8,27 +14,33 @@ interface SupplierSelectProps {
   placeholder?: string;
 }
 
-export const SupplierSelect = ({ value, onValueChange, placeholder = "Selecione um fornecedor" }: SupplierSelectProps) => {
-  const { data: suppliers, isLoading } = useSuppliers();
+export const SupplierSelect = ({ 
+  value, 
+  onValueChange, 
+  placeholder = "Selecione um fornecedor" 
+}: SupplierSelectProps) => {
+  const { data: suppliers, isLoading, error } = useSuppliers();
 
-  if (isLoading) {
-    return (
-      <Select disabled>
-        <SelectTrigger>
-          <SelectValue placeholder="Carregando fornecedores..." />
-        </SelectTrigger>
-      </Select>
-    );
+  console.log('SupplierSelect rendered');
+  console.log('Suppliers data:', suppliers);
+  console.log('Loading:', isLoading);
+  console.log('Error:', error);
+  console.log('Current value:', value);
+
+  if (error) {
+    console.error('Error loading suppliers:', error);
   }
 
+  const activeSuppliers = suppliers?.filter(supplier => supplier.status === 'active') || [];
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select value={value || ""} onValueChange={onValueChange}>
       <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={isLoading ? "Carregando..." : placeholder} />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="">Nenhum fornecedor</SelectItem>
-        {suppliers?.map((supplier) => (
+        {activeSuppliers.map((supplier) => (
           <SelectItem key={supplier.id} value={supplier.id}>
             {supplier.name}
           </SelectItem>

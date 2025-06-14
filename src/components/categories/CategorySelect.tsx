@@ -1,6 +1,12 @@
 
 import { useCategories } from "@/hooks/useCategories";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CategorySelectProps {
   value?: string;
@@ -8,27 +14,33 @@ interface CategorySelectProps {
   placeholder?: string;
 }
 
-export const CategorySelect = ({ value, onValueChange, placeholder = "Selecione uma categoria" }: CategorySelectProps) => {
-  const { data: categories, isLoading } = useCategories();
+export const CategorySelect = ({ 
+  value, 
+  onValueChange, 
+  placeholder = "Selecione uma categoria" 
+}: CategorySelectProps) => {
+  const { data: categories, isLoading, error } = useCategories();
 
-  if (isLoading) {
-    return (
-      <Select disabled>
-        <SelectTrigger>
-          <SelectValue placeholder="Carregando categorias..." />
-        </SelectTrigger>
-      </Select>
-    );
+  console.log('CategorySelect rendered');
+  console.log('Categories data:', categories);
+  console.log('Loading:', isLoading);
+  console.log('Error:', error);
+  console.log('Current value:', value);
+
+  if (error) {
+    console.error('Error loading categories:', error);
   }
 
+  const activeCategories = categories?.filter(cat => cat.status === 'active') || [];
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select value={value || ""} onValueChange={onValueChange}>
       <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={isLoading ? "Carregando..." : placeholder} />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="">Nenhuma categoria</SelectItem>
-        {categories?.map((category) => (
+        {activeCategories.map((category) => (
           <SelectItem key={category.id} value={category.id}>
             {category.name}
           </SelectItem>
