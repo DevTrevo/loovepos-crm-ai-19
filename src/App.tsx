@@ -12,6 +12,12 @@ import PDV from "./pages/PDV";
 import CRM from "./pages/CRM";
 import EmailMarketing from "./pages/EmailMarketing";
 import Ligacoes from "./pages/Ligacoes";
+import Produtos from "./pages/Produtos";
+import Categorias from "./pages/Categorias";
+import Fornecedores from "./pages/Fornecedores";
+import Estoque from "./pages/Estoque";
+import Relatorios from "./pages/Relatorios";
+import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,32 +59,32 @@ const App = () => (
             } />
             <Route path="/produtos" element={
               <ProtectedRoute>
-                <div className="p-6">Página de Produtos em desenvolvimento</div>
+                <Produtos />
               </ProtectedRoute>
             } />
             <Route path="/categorias" element={
               <ProtectedRoute>
-                <div className="p-6">Página de Categorias em desenvolvimento</div>
+                <Categorias />
               </ProtectedRoute>
             } />
             <Route path="/fornecedores" element={
               <ProtectedRoute>
-                <div className="p-6">Página de Fornecedores em desenvolvimento</div>
+                <Fornecedores />
               </ProtectedRoute>
             } />
             <Route path="/estoque" element={
               <ProtectedRoute>
-                <div className="p-6">Página de Estoque em desenvolvimento</div>
+                <Estoque />
               </ProtectedRoute>
             } />
             <Route path="/relatorios" element={
               <ProtectedRoute>
-                <div className="p-6">Página de Relatórios em desenvolvimento</div>
+                <Relatorios />
               </ProtectedRoute>
             } />
             <Route path="/configuracoes" element={
               <ProtectedRoute>
-                <div className="p-6">Página de Configurações em desenvolvimento</div>
+                <Configuracoes />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
