@@ -10,25 +10,17 @@ export interface Product {
   description?: string;
   price: number;
   cost_price?: number;
+  sku?: string;
+  barcode?: string;
   category: string;
   category_id?: string;
   supplier_id?: string;
   stock_quantity: number;
   min_stock: number;
-  barcode?: string;
-  sku?: string;
   status: 'active' | 'inactive';
   company_id?: string;
   created_at: string;
   updated_at: string;
-  categories?: {
-    name: string;
-    id: string;
-  };
-  suppliers?: {
-    name: string;
-    id: string;
-  };
 }
 
 export const useProducts = () => {
@@ -37,22 +29,24 @@ export const useProducts = () => {
   return useQuery({
     queryKey: ['products', company?.id],
     queryFn: async () => {
+      if (!company?.id) {
+        console.log('No company ID available for products query');
+        return [];
+      }
+
+      console.log('Fetching products for company:', company.id);
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          categories (
-            id,
-            name
-          ),
-          suppliers (
-            id,
-            name
-          )
-        `)
-        .order('created_at', { ascending: false });
+        .select('*')
+        .eq('company_id', company.id)
+        .order('name', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching products:', error);
+        throw error;
+      }
+      
+      console.log('Products fetched:', data?.length || 0);
       return data as Product[];
     },
     enabled: !!company?.id,
@@ -65,18 +59,32 @@ export const useCreateProduct = () => {
   const { company } = useAuth();
 
   return useMutation({
-    mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'categories' | 'suppliers' | 'company_id'>) => {
+    mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
       if (!company?.id) {
-        throw new Error('Empresa não encontrada');
+        console.error('No company ID available for product creation');
+        throw new Error('Empresa não encontrada. Faça logout e login novamente.');
       }
+
+      console.log('Creating product for company:', company.id);
+      console.log('Product data:', product);
+
+      const productData = {
+        ...product,
+        company_id: company.id
+      };
 
       const { data, error } = await supabase
         .from('products')
-        .insert([{ ...product, company_id: company.id }])
+        .insert([productData])
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating product:', error);
+        throw error;
+      }
+      
+      console.log('Product created successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -87,6 +95,7 @@ export const useCreateProduct = () => {
       });
     },
     onError: (error) => {
+      console.error('Create product mutation error:', error);
       toast({
         title: "Erro",
         description: "Erro ao criar produto: " + error.message,

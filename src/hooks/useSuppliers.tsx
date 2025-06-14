@@ -28,12 +28,24 @@ export const useSuppliers = () => {
   return useQuery({
     queryKey: ['suppliers', company?.id],
     queryFn: async () => {
+      if (!company?.id) {
+        console.log('No company ID available for suppliers query');
+        return [];
+      }
+
+      console.log('Fetching suppliers for company:', company.id);
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
+        .eq('company_id', company.id)
         .order('name', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching suppliers:', error);
+        throw error;
+      }
+      
+      console.log('Suppliers fetched:', data?.length || 0);
       return data as Supplier[];
     },
     enabled: !!company?.id,
@@ -48,16 +60,30 @@ export const useCreateSupplier = () => {
   return useMutation({
     mutationFn: async (supplier: Omit<Supplier, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
       if (!company?.id) {
-        throw new Error('Empresa não encontrada');
+        console.error('No company ID available for supplier creation');
+        throw new Error('Empresa não encontrada. Faça logout e login novamente.');
       }
+
+      console.log('Creating supplier for company:', company.id);
+      console.log('Supplier data:', supplier);
+
+      const supplierData = {
+        ...supplier,
+        company_id: company.id
+      };
 
       const { data, error } = await supabase
         .from('suppliers')
-        .insert([{ ...supplier, company_id: company.id }])
+        .insert([supplierData])
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating supplier:', error);
+        throw error;
+      }
+      
+      console.log('Supplier created successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -68,6 +94,7 @@ export const useCreateSupplier = () => {
       });
     },
     onError: (error) => {
+      console.error('Create supplier mutation error:', error);
       toast({
         title: "Erro",
         description: "Erro ao criar fornecedor: " + error.message,

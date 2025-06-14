@@ -1,102 +1,188 @@
 
-import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 export const AuthForm = () => {
-  const { signIn, signUp } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const [signInData, setSignInData] = useState({
-    email: '',
-    password: '',
-  });
-
-  const [signUpData, setSignUpData] = useState({
-    email: '',
-    password: '',
-    fullName: '',
-  });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Starting sign in process...');
-    setIsLoading(true);
-    setError(null);
+    setLoading(true);
 
     try {
-      const { error } = await signIn(signInData.email, signInData.password);
-      
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
       if (error) {
-        console.error('Sign in error:', error);
-        if (error.message.includes('Invalid login credentials')) {
-          setError('Email ou senha inválidos');
-        } else if (error.message.includes('Email not confirmed')) {
-          setError('Email não confirmado. Verifique sua caixa de entrada.');
-        } else {
-          setError(error.message);
-        }
+        toast({
+          title: "Erro no login",
+          description: error.message,
+          variant: "destructive",
+        });
       } else {
-        console.log('Sign in successful, redirecting...');
-        // Use a timeout to ensure auth state is updated before redirect
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 100);
+        toast({
+          title: "Login realizado",
+          description: "Bem-vindo de volta!",
+        });
+        window.location.href = "/dashboard";
       }
-    } catch (err) {
-      console.error('Unexpected sign in error:', err);
-      setError('Erro inesperado. Tente novamente.');
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro inesperado no login",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Starting sign up process...');
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
+    setLoading(true);
 
     try {
-      const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName);
-      
-      if (error) {
-        console.error('Sign up error:', error);
-        if (error.message.includes('User already registered')) {
-          setError('Este email já está cadastrado');
-        } else if (error.message.includes('Password should be at least')) {
-          setError('A senha deve ter pelo menos 6 caracteres');
-        } else {
-          setError(error.message);
-        }
-      } else {
-        console.log('Sign up successful');
-        setSuccess('Conta criada com sucesso! Verifique seu email para confirmar.');
-        setSignUpData({ email: '', password: '', fullName: '' });
+      // 1. Criar usuário
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (authError) {
+        toast({
+          title: "Erro no cadastro",
+          description: authError.message,
+          variant: "destructive",
+        });
+        return;
       }
-    } catch (err) {
-      console.error('Unexpected sign up error:', err);
-      setError('Erro inesperado. Tente novamente.');
+
+      if (!authData.user) {
+        toast({
+          title: "Erro",
+          description: "Falha ao criar usuário",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 2. Criar empresa se fornecida
+      let company = null;
+      if (companyName.trim()) {
+        const { data: companyData, error: companyError } = await supabase
+          .from('companies')
+          .insert([{
+            name: companyName.trim(),
+            status: 'active',
+          }])
+          .select()
+          .single();
+
+        if (companyError) {
+          console.error('Company creation error:', companyError);
+          toast({
+            title: "Erro",
+            description: "Erro ao criar empresa: " + companyError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        company = companyData;
+      }
+
+      // 3. Atualizar perfil do usuário
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          company_id: company?.id || null,
+        })
+        .eq('id', authData.user.id);
+
+      if (profileError) {
+        console.error('Profile update error:', profileError);
+        toast({
+          title: "Erro",
+          description: "Erro ao atualizar perfil: " + profileError.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 4. Criar associação empresa-usuário se empresa foi criada
+      if (company) {
+        const { error: companyUserError } = await supabase
+          .from('company_users')
+          .insert([{
+            company_id: company.id,
+            user_id: authData.user.id,
+            role: 'owner',
+            status: 'active',
+            joined_at: new Date().toISOString(),
+          }]);
+
+        if (companyUserError) {
+          console.error('Company user creation error:', companyUserError);
+          toast({
+            title: "Erro",
+            description: "Erro ao associar usuário à empresa: " + companyUserError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      toast({
+        title: "Cadastro realizado",
+        description: "Conta criada com sucesso! Você já pode fazer login.",
+      });
+
+      // Limpar formulário
+      setEmail("");
+      setPassword("");
+      setFullName("");
+      setCompanyName("");
+
+    } catch (error) {
+      console.error('Unexpected signup error:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado no cadastro",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">LoovePOS</CardTitle>
-          <CardDescription>Sistema de Gestão Empresarial</CardDescription>
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">LoovePOS</CardTitle>
+          <CardDescription className="text-center">
+            Sistema de Gestão Empresarial
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
@@ -108,32 +194,29 @@ export const AuthForm = () => {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="signin-email"
+                    id="email"
                     type="email"
-                    placeholder="seu@email.com"
-                    value={signInData.email}
-                    onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
-                    disabled={isLoading}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
+                    placeholder="seu@email.com"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Senha</Label>
+                  <Label htmlFor="password">Senha</Label>
                   <Input
-                    id="signin-password"
+                    id="password"
                     type="password"
-                    placeholder="••••••••"
-                    value={signInData.password}
-                    onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
-                    disabled={isLoading}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
+                    placeholder="Sua senha"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isLoading ? 'Entrando...' : 'Entrar'}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Entrando..." : "Entrar"}
                 </Button>
               </form>
             </TabsContent>
@@ -141,60 +224,55 @@ export const AuthForm = () => {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">Nome Completo</Label>
+                  <Label htmlFor="fullName">Nome Completo</Label>
                   <Input
-                    id="signup-name"
+                    id="fullName"
                     type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
                     placeholder="Seu nome completo"
-                    value={signUpData.fullName}
-                    onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })}
-                    disabled={isLoading}
-                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="companyName">Nome da Empresa</Label>
                   <Input
-                    id="signup-email"
+                    id="companyName"
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    required
+                    placeholder="Nome da sua empresa"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signupEmail">Email</Label>
+                  <Input
+                    id="signupEmail"
                     type="email"
-                    placeholder="seu@email.com"
-                    value={signUpData.email}
-                    onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
-                    disabled={isLoading}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
+                    placeholder="seu@email.com"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Senha</Label>
+                  <Label htmlFor="signupPassword">Senha</Label>
                   <Input
-                    id="signup-password"
+                    id="signupPassword"
                     type="password"
-                    placeholder="••••••••"
-                    value={signUpData.password}
-                    onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
-                    disabled={isLoading}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
+                    placeholder="Crie uma senha segura"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isLoading ? 'Cadastrando...' : 'Cadastrar'}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Criando conta..." : "Criar conta"}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
-
-          {error && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {success && (
-            <Alert className="mt-4">
-              <AlertDescription>{success}</AlertDescription>
-            </Alert>
-          )}
         </CardContent>
       </Card>
     </div>
