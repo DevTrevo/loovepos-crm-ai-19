@@ -2,14 +2,15 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useCreateProduct } from "@/hooks/useProducts";
-import { CategorySelect } from "@/components/categories/CategorySelect";
-import { SupplierSelect } from "@/components/suppliers/SupplierSelect";
+import { CategorySelectWithCreate } from "@/components/categories/CategorySelectWithCreate";
+import { SupplierSelectWithCreate } from "@/components/suppliers/SupplierSelectWithCreate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ProductFormData {
   name: string;
@@ -43,14 +44,36 @@ export const ProductForm = ({ onSuccess }: ProductFormProps) => {
   
   const createProduct = useCreateProduct();
   const { toast } = useToast();
+  const { user, company, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   console.log('ProductForm rendered');
+  console.log('Auth state:', { user: !!user, company: !!company, loading });
+  console.log('Company details:', company);
   console.log('Form errors:', errors);
   console.log('Form values:', watch());
 
+  // Verificar se a empresa está carregada
+  if (loading) {
+    return (
+      <div className="text-center py-4">
+        <p>Carregando dados da empresa...</p>
+      </div>
+    );
+  }
+
+  if (!company) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-red-600">Erro: Dados da empresa não encontrados.</p>
+        <p className="text-sm text-gray-600">Tente fazer logout e login novamente.</p>
+      </div>
+    );
+  }
+
   const onSubmit = async (data: ProductFormData) => {
     console.log('Form submitted with data:', data);
+    console.log('Company at submit:', company);
     
     if (isLoading) return;
     
@@ -175,7 +198,7 @@ export const ProductForm = ({ onSuccess }: ProductFormProps) => {
 
         <div>
           <Label>Categoria</Label>
-          <CategorySelect
+          <CategorySelectWithCreate
             value={watch("category_id") || ""}
             onValueChange={(value) => {
               console.log('Category selected:', value);
@@ -188,7 +211,7 @@ export const ProductForm = ({ onSuccess }: ProductFormProps) => {
 
         <div>
           <Label>Fornecedor</Label>
-          <SupplierSelect
+          <SupplierSelectWithCreate
             value={watch("supplier_id") || ""}
             onValueChange={(value) => {
               console.log('Supplier selected:', value);

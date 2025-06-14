@@ -1,158 +1,216 @@
 
-import { useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthContext } from '@/contexts/AuthContext';
-import { Profile, Company, CompanyUser } from '@/types/auth';
-import { 
-  loadUserData, 
-  signUpUser, 
-  signInUser, 
-  signOutUser, 
-  checkPermission, 
-  checkRole 
-} from '@/utils/authUtils';
+import { useToast } from '@/hooks/use-toast';
 
-interface AuthProviderProps {
-  children: React.ReactNode;
+interface Company {
+  id: string;
+  name: string;
+  cnpj?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  logo_url?: string;
+  subscription_plan?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+interface Profile {
+  id: string;
+  full_name?: string;
+  role?: string;
+  phone?: string;
+  position?: string;
+  company_id?: string;
+  is_active?: boolean;
+  permissions?: any;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  profile: Profile | null;
+  company: Company | null;
+  loading: boolean;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  const [companyUser, setCompanyUser] = useState<CompanyUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Function to load user data safely
-  const handleUserDataLoad = async (userId: string) => {
+  console.log('AuthProvider state:', { user: !!user, profile: !!profile, company: !!company, loading });
+
+  const loadUserData = async (currentUser: User) => {
     try {
-      console.log('Loading user data for:', userId);
-      const userData = await loadUserData(userId);
-      setProfile(userData.profile);
-      setCompany(userData.company);
-      setCompanyUser(userData.companyUser);
-      console.log('User data loaded successfully:', userData);
+      console.log('Loading user data for:', currentUser.id);
+
+      // Carregar perfil do usuário
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error loading profile:', profileError);
+        throw profileError;
+      }
+
+      console.log('Profile loaded:', profileData);
+      setProfile(profileData);
+
+      // Carregar dados da empresa através da tabela company_users
+      const { data: companyUserData, error: companyUserError } = await supabase
+        .from('company_users')
+        .select(`
+          company_id,
+          role,
+          status,
+          companies (*)
+        `)
+        .eq('user_id', currentUser.id)
+        .eq('status', 'active')
+        .single();
+
+      if (companyUserError) {
+        console.error('Error loading company user data:', companyUserError);
+        
+        // Se não encontrar na tabela company_users, tentar através do profile
+        if (profileData?.company_id) {
+          console.log('Trying to load company via profile company_id:', profileData.company_id);
+          
+          const { data: companyData, error: companyError } = await supabase
+            .from('companies')
+            .select('*')
+            .eq('id', profileData.company_id)
+            .single();
+
+          if (companyError) {
+            console.error('Error loading company via profile:', companyError);
+            throw new Error('Não foi possível carregar os dados da empresa');
+          }
+
+          console.log('Company loaded via profile:', companyData);
+          setCompany(companyData);
+        } else {
+          throw new Error('Usuário não está associado a nenhuma empresa');
+        }
+      } else {
+        console.log('Company user data loaded:', companyUserData);
+        setCompany(companyUserData.companies);
+      }
+
     } catch (error) {
-      console.error('Error loading user data:', error);
-      // Reset states on error
-      setProfile(null);
-      setCompany(null);
-      setCompanyUser(null);
-    } finally {
-      setLoading(false);
+      console.error('Error in loadUserData:', error);
+      toast({
+        title: "Erro de autenticação",
+        description: "Erro ao carregar dados do usuário. Tente fazer login novamente.",
+        variant: "destructive",
+      });
     }
   };
 
   useEffect(() => {
-    console.log('Setting up auth state listener...');
-    
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
-        
-        // Update session and user synchronously
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Defer user data loading to prevent deadlocks
-          setTimeout(() => {
-            handleUserDataLoad(session.user.id);
-          }, 0);
-        } else {
-          // Clear states immediately when no session
-          setProfile(null);
-          setCompany(null);
-          setCompanyUser(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    const initializeAuth = async () => {
+    // Verificar usuário atual
+    const checkUser = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+        
         if (error) {
-          console.error('Error getting session:', error);
+          console.error('Error getting current user:', error);
           setLoading(false);
           return;
         }
 
-        console.log('Initial session check:', session?.user?.id);
-        setSession(session);
-        setUser(session?.user ?? null);
+        console.log('Current user:', currentUser);
+        setUser(currentUser);
 
-        if (session?.user) {
-          await handleUserDataLoad(session.user.id);
-        } else {
-          setLoading(false);
+        if (currentUser) {
+          await loadUserData(currentUser);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('Error in checkUser:', error);
+      } finally {
         setLoading(false);
       }
     };
 
-    initializeAuth();
+    checkUser();
 
-    return () => {
-      console.log('Cleaning up auth subscription');
-      subscription.unsubscribe();
-    };
+    // Listener para mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        await loadUserData(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setProfile(null);
+        setCompany(null);
+      }
+      
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    console.log('Signing in user:', email);
-    return await signInUser(email, password);
-  };
-
-  const signUp = async (email: string, password: string, fullName?: string, companyName?: string) => {
-    console.log('Signing up user:', email);
-    return await signUpUser(email, password, fullName, companyName);
-  };
-
   const signOut = async () => {
-    console.log('Signing out user');
-    setProfile(null);
-    setCompany(null);
-    setCompanyUser(null);
-    await signOutUser();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setUser(null);
+      setProfile(null);
+      setCompany(null);
+      
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao fazer logout.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const hasPermission = (permission: string): boolean => {
-    return checkPermission(companyUser, permission);
+  const value = {
+    user,
+    profile,
+    company,
+    loading,
+    signOut,
   };
-
-  const isRole = (role: string): boolean => {
-    return checkRole(companyUser, role);
-  };
-
-  console.log('Auth Provider State:', { 
-    loading, 
-    user: user?.id, 
-    profile: profile?.id, 
-    company: company?.id 
-  });
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      session,
-      profile,
-      company,
-      companyUser,
-      loading,
-      signIn,
-      signUp,
-      signOut,
-      hasPermission,
-      isRole,
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
