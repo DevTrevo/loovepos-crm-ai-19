@@ -38,6 +38,7 @@ export interface AuthContextType {
   company: Company | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  hasPermission: (permission: string) => boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +39,7 @@ interface AuthContextType {
   company: Company | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  hasPermission: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -192,12 +192,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const hasPermission = (permission: string): boolean => {
+    // For now, return true for basic permissions if user has a profile
+    // This is a simplified implementation - you may want to enhance this
+    // based on your actual permission system
+    if (!profile) return false;
+    
+    // Check if user has admin role or the specific permission
+    if (profile.role === 'admin' || profile.role === 'owner') return true;
+    
+    // Check specific permissions if they exist
+    if (profile.permissions && profile.permissions[permission]) {
+      return profile.permissions[permission] === true;
+    }
+    
+    // Default permissions for common actions
+    const defaultPermissions = ['manage_products', 'view_products', 'manage_categories'];
+    return defaultPermissions.includes(permission);
+  };
+
   const value = {
     user,
     profile,
     company,
     loading,
     signOut,
+    hasPermission,
   };
 
   return (
