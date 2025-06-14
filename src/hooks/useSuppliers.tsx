@@ -27,7 +27,6 @@ export const useSuppliers = () => {
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
-        .eq('status', 'active')
         .order('name', { ascending: true });
       
       if (error) throw error;
@@ -62,6 +61,69 @@ export const useCreateSupplier = () => {
       toast({
         title: "Erro",
         description: "Erro ao criar fornecedor: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useUpdateSupplier = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Supplier> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      toast({
+        title: "Fornecedor atualizado",
+        description: "Fornecedor atualizado com sucesso!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar fornecedor: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useDeleteSupplier = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('suppliers')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      toast({
+        title: "Fornecedor removido",
+        description: "Fornecedor removido com sucesso!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao remover fornecedor: " + error.message,
         variant: "destructive",
       });
     },
