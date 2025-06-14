@@ -1,188 +1,167 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  DollarSign, 
-  Users, 
-  ShoppingCart, 
-  TrendingUp, 
-  Mail, 
-  Phone,
-  Package,
-  AlertCircle
-} from "lucide-react";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart3, DollarSign, Package, ShoppingCart, TrendingUp, Users } from "lucide-react";
+import { useClients } from "@/hooks/useClients";
+import { useProducts } from "@/hooks/useProducts";
+import { useSales } from "@/hooks/useSales";
 
 const Dashboard = () => {
-  const salesData = {
-    today: 2450.00,
-    month: 15780.00,
-    totalClients: 142,
-    activeClients: 89,
-    pendingOrders: 7,
-    lowStock: 3
-  };
+  const { data: clients } = useClients();
+  const { data: products } = useProducts();
+  const { data: sales } = useSales();
 
-  const recentSales = [
-    { id: 1, client: "Maria Silva", value: 180.00, time: "10:30", status: "completed" },
-    { id: 2, client: "João Santos", value: 95.50, time: "11:15", status: "completed" },
-    { id: 3, client: "Ana Costa", value: 220.00, time: "12:00", status: "pending" }
-  ];
-
-  const campaigns = [
-    { id: 1, name: "Promoção Verão", sent: 85, opened: 34, clicks: 12, status: "active" },
-    { id: 2, name: "Clientes Inativos", sent: 23, opened: 8, clicks: 3, status: "completed" }
-  ];
+  const totalRevenue = sales?.reduce((sum, sale) => sum + sale.total_amount, 0) || 0;
+  const lowStockProducts = products?.filter(p => p.stock_quantity <= p.min_stock).length || 0;
+  const activeSales = sales?.filter(s => s.status === 'completed').length || 0;
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        <main className="flex-1 bg-gray-50">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <SidebarTrigger />
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                  <p className="text-gray-600">Visão geral do seu negócio</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Nova Campanha
-                </Button>
-                <Button>
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Nova Venda
-                </Button>
-              </div>
-            </div>
+      <AppSidebar />
+      <SidebarInset>
+        <div className="p-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+            <p className="text-gray-600">Visão geral do seu negócio</p>
+          </div>
 
-            {/* Métricas principais */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card className="border-l-4 border-l-green-500">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Vendas Hoje</CardTitle>
-                  <DollarSign className="h-4 w-4 text-green-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    R$ {salesData.today.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </div>
-                  <p className="text-xs text-gray-600">+12% em relação a ontem</p>
-                </CardContent>
-              </Card>
+          {/* Cards de métricas principais */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">R$ {totalRevenue.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground">
+                  +20.1% em relação ao mês anterior
+                </p>
+              </CardContent>
+            </Card>
 
-              <Card className="border-l-4 border-l-blue-500">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
-                  <Users className="h-4 w-4 text-blue-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{salesData.activeClients}</div>
-                  <p className="text-xs text-gray-600">de {salesData.totalClients} total</p>
-                </CardContent>
-              </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Vendas</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{activeSales}</div>
+                <p className="text-xs text-muted-foreground">
+                  +12.5% em relação à semana anterior
+                </p>
+              </CardContent>
+            </Card>
 
-              <Card className="border-l-4 border-l-orange-500">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pedidos Pendentes</CardTitle>
-                  <ShoppingCart className="h-4 w-4 text-orange-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-orange-600">{salesData.pendingOrders}</div>
-                  <p className="text-xs text-gray-600">Para processar</p>
-                </CardContent>
-              </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Clientes</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{clients?.length || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  +2 novos esta semana
+                </p>
+              </CardContent>
+            </Card>
 
-              <Card className="border-l-4 border-l-red-500">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Estoque Baixo</CardTitle>
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">{salesData.lowStock}</div>
-                  <p className="text-xs text-gray-600">Produtos para repor</p>
-                </CardContent>
-              </Card>
-            </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Produtos</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{products?.length || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  {lowStockProducts} com estoque baixo
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Vendas Recentes */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5" />
-                    Vendas Recentes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentSales.map((sale) => (
-                      <div key={sale.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          {/* Cards de informações detalhadas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Vendas Recentes
+                </CardTitle>
+                <CardDescription>Últimas vendas realizadas</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {sales && sales.length > 0 ? (
+                  <div className="space-y-3">
+                    {sales.slice(0, 5).map((sale) => (
+                      <div key={sale.id} className="flex items-center justify-between border-b pb-2">
                         <div>
-                          <p className="font-medium">{sale.client}</p>
-                          <p className="text-sm text-gray-600">{sale.time}</p>
+                          <p className="font-medium">
+                            {sale.clients?.name || 'Cliente não identificado'}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(sale.created_at).toLocaleDateString('pt-BR')}
+                          </p>
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-green-600">
-                            R$ {sale.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            R$ {sale.total_amount.toFixed(2)}
                           </p>
-                          <Badge variant={sale.status === 'completed' ? 'default' : 'secondary'}>
-                            {sale.status === 'completed' ? 'Concluída' : 'Pendente'}
-                          </Badge>
+                          <p className="text-xs text-gray-500 capitalize">
+                            {sale.payment_method}
+                          </p>
                         </div>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">Nenhuma venda registrada</p>
+                )}
+              </CardContent>
+            </Card>
 
-              {/* Campanhas de Email */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="w-5 h-5" />
-                    Campanhas de Email
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {campaigns.map((campaign) => (
-                      <div key={campaign.id} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium">{campaign.name}</h4>
-                          <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-                            {campaign.status === 'active' ? 'Ativa' : 'Finalizada'}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 text-sm">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  Estoque Baixo
+                </CardTitle>
+                <CardDescription>Produtos que precisam de reposição</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {products && lowStockProducts > 0 ? (
+                  <div className="space-y-3">
+                    {products
+                      .filter(p => p.stock_quantity <= p.min_stock)
+                      .slice(0, 5)
+                      .map((product) => (
+                        <div key={product.id} className="flex items-center justify-between border-b pb-2">
                           <div>
-                            <p className="text-gray-600">Enviados</p>
-                            <p className="font-bold">{campaign.sent}</p>
+                            <p className="font-medium">{product.name}</p>
+                            <p className="text-sm text-gray-600">{product.category}</p>
                           </div>
-                          <div>
-                            <p className="text-gray-600">Abertos</p>
-                            <p className="font-bold text-blue-600">{campaign.opened}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Cliques</p>
-                            <p className="font-bold text-green-600">{campaign.clicks}</p>
+                          <div className="text-right">
+                            <p className="font-bold text-red-600">
+                              {product.stock_quantity} un.
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Mín: {product.min_stock}
+                            </p>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">
+                    Todos os produtos têm estoque adequado
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </main>
-      </div>
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 };
