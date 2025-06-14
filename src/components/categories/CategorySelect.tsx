@@ -33,13 +33,18 @@ export const CategorySelect = ({
 
   const activeCategories = categories?.filter(cat => cat.status === 'active') || [];
 
+  const handleValueChange = (selectedValue: string) => {
+    // Convert "none" back to empty string for the form
+    onValueChange(selectedValue === "none" ? "" : selectedValue);
+  };
+
   return (
-    <Select value={value || ""} onValueChange={onValueChange}>
+    <Select value={value || "none"} onValueChange={handleValueChange}>
       <SelectTrigger>
         <SelectValue placeholder={isLoading ? "Carregando..." : placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="">Nenhuma categoria</SelectItem>
+        <SelectItem value="none">Nenhuma categoria</SelectItem>
         {activeCategories.map((category) => (
           <SelectItem key={category.id} value={category.id}>
             {category.name}
