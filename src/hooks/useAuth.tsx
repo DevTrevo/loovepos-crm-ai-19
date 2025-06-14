@@ -121,7 +121,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .single();
 
         if (companyUserData) {
-          setCompanyUser(companyUserData);
+          // Cast the role to the proper type
+          const typedCompanyUser: CompanyUser = {
+            ...companyUserData,
+            role: companyUserData.role as 'owner' | 'admin' | 'manager' | 'employee',
+            status: companyUserData.status as 'active' | 'inactive' | 'pending'
+          };
+          setCompanyUser(typedCompanyUser);
 
           // Load company data
           const { data: companyData } = await supabase
