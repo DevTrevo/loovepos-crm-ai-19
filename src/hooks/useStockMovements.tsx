@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface StockMovement {
   id: string;
@@ -12,6 +13,7 @@ export interface StockMovement {
   reference_id?: string;
   reference_type?: string;
   notes?: string;
+  company_id?: string;
   created_at: string;
   products?: {
     name: string;
@@ -20,8 +22,10 @@ export interface StockMovement {
 }
 
 export const useStockMovements = () => {
+  const { company } = useAuth();
+
   return useQuery({
-    queryKey: ['stock-movements'],
+    queryKey: ['stock-movements', company?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stock_movements')
@@ -38,18 +42,24 @@ export const useStockMovements = () => {
       if (error) throw error;
       return data as StockMovement[];
     },
+    enabled: !!company?.id,
   });
 };
 
 export const useCreateStockMovement = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { company } = useAuth();
 
   return useMutation({
-    mutationFn: async (movement: Omit<StockMovement, 'id' | 'created_at' | 'products'>) => {
+    mutationFn: async (movement: Omit<StockMovement, 'id' | 'created_at' | 'products' | 'company_id'>) => {
+      if (!company?.id) {
+        throw new Error('Empresa não encontrada');
+      }
+
       const { data, error } = await supabase
         .from('stock_movements')
-        .insert([movement])
+        .insert([{ ...movement, company_id: company.id }])
         .select()
         .single();
       

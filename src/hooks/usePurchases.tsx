@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Purchase {
   id: string;
@@ -12,6 +13,7 @@ export interface Purchase {
   expected_date?: string;
   received_date?: string;
   notes?: string;
+  company_id?: string;
   created_at: string;
   updated_at: string;
   suppliers?: {
@@ -21,8 +23,10 @@ export interface Purchase {
 }
 
 export const usePurchases = () => {
+  const { company } = useAuth();
+
   return useQuery({
-    queryKey: ['purchases'],
+    queryKey: ['purchases', company?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('purchases')
@@ -38,18 +42,24 @@ export const usePurchases = () => {
       if (error) throw error;
       return data as Purchase[];
     },
+    enabled: !!company?.id,
   });
 };
 
 export const useCreatePurchase = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { company } = useAuth();
 
   return useMutation({
-    mutationFn: async (purchase: Omit<Purchase, 'id' | 'created_at' | 'updated_at' | 'suppliers'>) => {
+    mutationFn: async (purchase: Omit<Purchase, 'id' | 'created_at' | 'updated_at' | 'suppliers' | 'company_id'>) => {
+      if (!company?.id) {
+        throw new Error('Empresa não encontrada');
+      }
+
       const { data, error } = await supabase
         .from('purchases')
-        .insert([purchase])
+        .insert([{ ...purchase, company_id: company.id }])
         .select()
         .single();
       

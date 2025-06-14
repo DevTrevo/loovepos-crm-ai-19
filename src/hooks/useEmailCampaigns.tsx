@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface EmailCampaign {
   id: string;
@@ -13,13 +14,16 @@ export interface EmailCampaign {
   opened_count?: number;
   clicked_count?: number;
   scheduled_at?: string;
+  company_id?: string;
   created_at: string;
   updated_at: string;
 }
 
 export const useEmailCampaigns = () => {
+  const { company } = useAuth();
+
   return useQuery({
-    queryKey: ['email-campaigns'],
+    queryKey: ['email-campaigns', company?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('email_campaigns')
@@ -29,18 +33,24 @@ export const useEmailCampaigns = () => {
       if (error) throw error;
       return data as EmailCampaign[];
     },
+    enabled: !!company?.id,
   });
 };
 
 export const useCreateEmailCampaign = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { company } = useAuth();
 
   return useMutation({
-    mutationFn: async (campaign: Omit<EmailCampaign, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (campaign: Omit<EmailCampaign, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+      if (!company?.id) {
+        throw new Error('Empresa não encontrada');
+      }
+
       const { data, error } = await supabase
         .from('email_campaigns')
-        .insert([campaign])
+        .insert([{ ...campaign, company_id: company.id }])
         .select()
         .single();
       

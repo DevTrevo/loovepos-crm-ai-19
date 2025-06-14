@@ -498,6 +498,45 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          company_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          action_url?: string | null
+          company_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_url?: string | null
+          company_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string | null

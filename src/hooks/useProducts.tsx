@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Product {
   id: string;
@@ -17,6 +18,7 @@ export interface Product {
   barcode?: string;
   sku?: string;
   status: 'active' | 'inactive';
+  company_id?: string;
   created_at: string;
   updated_at: string;
   categories?: {
@@ -30,8 +32,10 @@ export interface Product {
 }
 
 export const useProducts = () => {
+  const { company } = useAuth();
+
   return useQuery({
-    queryKey: ['products'],
+    queryKey: ['products', company?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
@@ -51,18 +55,24 @@ export const useProducts = () => {
       if (error) throw error;
       return data as Product[];
     },
+    enabled: !!company?.id,
   });
 };
 
 export const useCreateProduct = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { company } = useAuth();
 
   return useMutation({
-    mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'categories' | 'suppliers'>) => {
+    mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'categories' | 'suppliers' | 'company_id'>) => {
+      if (!company?.id) {
+        throw new Error('Empresa não encontrada');
+      }
+
       const { data, error } = await supabase
         .from('products')
-        .insert([product])
+        .insert([{ ...product, company_id: company.id }])
         .select()
         .single();
       
@@ -113,6 +123,36 @@ export const useUpdateProduct = () => {
       toast({
         title: "Erro",
         description: "Erro ao atualizar produto: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useDeleteProduct = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast({
+        title: "Produto removido",
+        description: "Produto removido com sucesso!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao remover produto: " + error.message,
         variant: "destructive",
       });
     },

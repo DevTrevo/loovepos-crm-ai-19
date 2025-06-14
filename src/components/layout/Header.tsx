@@ -1,40 +1,32 @@
 
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { LogOut, User } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Header = () => {
-  const { user, signOut } = useAuth();
+  const { user, profile, company } = useAuth();
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">LoovePOS</h1>
+    <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+      <div className="flex items-center gap-2 px-4 w-full">
+        <SidebarTrigger className="-ml-1" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              {user?.email}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex-1">
+          <h1 className="text-lg font-semibold">
+            {company?.name || 'LoovePOS'}
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          
+          <div className="text-sm">
+            <div className="font-medium">{profile?.full_name || user?.email}</div>
+            <div className="text-xs text-gray-500">{profile?.position || 'Usuário'}</div>
+          </div>
+        </div>
       </div>
     </header>
   );
