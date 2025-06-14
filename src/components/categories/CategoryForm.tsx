@@ -30,7 +30,14 @@ export const CategoryForm = ({ onSuccess }: CategoryFormProps) => {
   const onSubmit = async (data: CategoryFormData) => {
     setIsSubmitting(true);
     try {
-      await createCategory.mutateAsync(data);
+      // Limpar dados opcionais
+      const cleanData = {
+        name: data.name,
+        description: data.description || '',
+        status: data.status
+      };
+      
+      await createCategory.mutateAsync(cleanData);
       reset();
       onSuccess();
     } catch (error) {
@@ -56,7 +63,7 @@ export const CategoryForm = ({ onSuccess }: CategoryFormProps) => {
         <Textarea
           id="description"
           {...register("description")}
-          placeholder="Descrição da categoria"
+          placeholder="Descrição da categoria (opcional)"
         />
       </div>
 

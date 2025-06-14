@@ -34,7 +34,9 @@ export const ProductForm = ({ onSuccess }: ProductFormProps) => {
     defaultValues: {
       status: 'active',
       stock_quantity: 0,
-      min_stock: 5
+      min_stock: 5,
+      category: 'Geral', // Categoria padrão caso não seja selecionada
+      price: 0
     }
   });
   const createProduct = useCreateProduct();
@@ -43,7 +45,23 @@ export const ProductForm = ({ onSuccess }: ProductFormProps) => {
   const onSubmit = async (data: ProductFormData) => {
     setIsSubmitting(true);
     try {
-      await createProduct.mutateAsync(data);
+      // Se não tiver categoria selecionada, usar "Geral" como padrão
+      if (!data.category_id) {
+        data.category = 'Geral';
+      }
+      
+      // Remover campos vazios opcionais
+      const cleanData = {
+        ...data,
+        description: data.description || '',
+        cost_price: data.cost_price || 0,
+        supplier_id: data.supplier_id || null,
+        category_id: data.category_id || null,
+        barcode: data.barcode || '',
+        sku: data.sku || ''
+      };
+      
+      await createProduct.mutateAsync(cleanData);
       reset();
       onSuccess();
     } catch (error) {
@@ -69,7 +87,7 @@ export const ProductForm = ({ onSuccess }: ProductFormProps) => {
         <Textarea
           id="description"
           {...register("description")}
-          placeholder="Descrição do produto"
+          placeholder="Descrição do produto (opcional)"
         />
       </div>
 
@@ -92,17 +110,19 @@ export const ProductForm = ({ onSuccess }: ProductFormProps) => {
             type="number"
             step="0.01"
             {...register("cost_price", { valueAsNumber: true })}
-            placeholder="0.00"
+            placeholder="0.00 (opcional)"
           />
         </div>
       </div>
 
       <div>
-        <Label>Categoria *</Label>
+        <Label>Categoria</Label>
         <CategorySelect
           value={watch("category_id")}
           onValueChange={(value) => setValue("category_id", value)}
+          placeholder="Selecione uma categoria (opcional)"
         />
+        <p className="text-sm text-gray-500 mt-1">Se não selecionada, será usado "Geral"</p>
       </div>
 
       <div>
@@ -110,7 +130,9 @@ export const ProductForm = ({ onSuccess }: ProductFormProps) => {
         <SupplierSelect
           value={watch("supplier_id")}
           onValueChange={(value) => setValue("supplier_id", value)}
+          placeholder="Selecione um fornecedor (opcional)"
         />
+        <p className="text-sm text-gray-500 mt-1">Campo opcional</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -141,7 +163,7 @@ export const ProductForm = ({ onSuccess }: ProductFormProps) => {
           <Input
             id="sku"
             {...register("sku")}
-            placeholder="Código SKU"
+            placeholder="Código SKU (opcional)"
           />
         </div>
 
@@ -150,7 +172,7 @@ export const ProductForm = ({ onSuccess }: ProductFormProps) => {
           <Input
             id="barcode"
             {...register("barcode")}
-            placeholder="Código de barras"
+            placeholder="Código de barras (opcional)"
           />
         </div>
       </div>

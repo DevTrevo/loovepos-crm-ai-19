@@ -27,6 +27,7 @@ export const SupplierSelect = ({ value, onValueChange, placeholder = "Selecione 
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
+        <SelectItem value="">Nenhum fornecedor</SelectItem>
         {suppliers?.map((supplier) => (
           <SelectItem key={supplier.id} value={supplier.id}>
             {supplier.name}

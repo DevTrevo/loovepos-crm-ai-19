@@ -27,6 +27,7 @@ export const CategorySelect = ({ value, onValueChange, placeholder = "Selecione 
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
+        <SelectItem value="">Nenhuma categoria</SelectItem>
         {categories?.map((category) => (
           <SelectItem key={category.id} value={category.id}>
             {category.name}

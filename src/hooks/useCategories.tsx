@@ -20,12 +20,24 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['categories', company?.id],
     queryFn: async () => {
+      if (!company?.id) {
+        console.log('No company ID available for categories query');
+        return [];
+      }
+
+      console.log('Fetching categories for company:', company.id);
       const { data, error } = await supabase
         .from('categories')
         .select('*')
+        .eq('company_id', company.id)
         .order('name', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+      
+      console.log('Categories fetched:', data?.length || 0);
       return data as Category[];
     },
     enabled: !!company?.id,
@@ -40,16 +52,33 @@ export const useCreateCategory = () => {
   return useMutation({
     mutationFn: async (category: Omit<Category, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
       if (!company?.id) {
-        throw new Error('Empresa não encontrada');
+        console.error('No company ID available for category creation');
+        throw new Error('Empresa não encontrada. Faça logout e login novamente.');
       }
+
+      console.log('Creating category for company:', company.id);
+      console.log('Category data:', category);
+
+      // Garantir que campos opcionais tenham valores apropriados
+      const categoryData = {
+        name: category.name,
+        description: category.description || null,
+        status: category.status || 'active',
+        company_id: company.id
+      };
 
       const { data, error } = await supabase
         .from('categories')
-        .insert([{ ...category, company_id: company.id }])
+        .insert([categoryData])
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating category:', error);
+        throw error;
+      }
+      
+      console.log('Category created successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -60,6 +89,7 @@ export const useCreateCategory = () => {
       });
     },
     onError: (error) => {
+      console.error('Create category mutation error:', error);
       toast({
         title: "Erro",
         description: "Erro ao criar categoria: " + error.message,

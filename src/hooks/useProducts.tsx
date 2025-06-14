@@ -68,8 +68,20 @@ export const useCreateProduct = () => {
       console.log('Creating product for company:', company.id);
       console.log('Product data:', product);
 
+      // Garantir que campos opcionais tenham valores apropriados
       const productData = {
-        ...product,
+        name: product.name,
+        description: product.description || null,
+        price: product.price,
+        cost_price: product.cost_price || null,
+        category: product.category || 'Geral',
+        category_id: product.category_id || null,
+        supplier_id: product.supplier_id || null,
+        stock_quantity: product.stock_quantity || 0,
+        min_stock: product.min_stock || 5,
+        barcode: product.barcode || null,
+        sku: product.sku || null,
+        status: product.status || 'active',
         company_id: company.id
       };
 
