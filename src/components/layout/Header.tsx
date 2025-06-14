@@ -2,10 +2,22 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export const Header = () => {
   const { user, profile, company } = useAuth();
+
+  const getInitials = (name?: string) => {
+    if (!name) return user?.email?.charAt(0).toUpperCase() || 'U';
+    return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2);
+  };
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -22,10 +34,26 @@ export const Header = () => {
         <div className="flex items-center gap-2">
           <NotificationBell />
           
-          <div className="text-sm">
-            <div className="font-medium">{profile?.full_name || user?.email}</div>
-            <div className="text-xs text-gray-500">{profile?.position || 'Usuário'}</div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-md p-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="text-xs">
+                    {getInitials(profile?.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-sm hidden md:block">
+                  <div className="font-medium">{profile?.full_name || user?.email}</div>
+                  <div className="text-xs text-gray-500">{profile?.position || 'Usuário'}</div>
+                </div>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <div className="p-2">
+                <LogoutButton />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
