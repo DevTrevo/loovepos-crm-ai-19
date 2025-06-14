@@ -27,6 +27,12 @@ const App = () => (
           <Route path="/crm" element={<CRM />} />
           <Route path="/email-marketing" element={<EmailMarketing />} />
           <Route path="/ligacoes" element={<Ligacoes />} />
+          <Route path="/produtos" element={<div className="p-6">Página de Produtos em desenvolvimento</div>} />
+          <Route path="/categorias" element={<div className="p-6">Página de Categorias em desenvolvimento</div>} />
+          <Route path="/fornecedores" element={<div className="p-6">Página de Fornecedores em desenvolvimento</div>} />
+          <Route path="/estoque" element={<div className="p-6">Página de Estoque em desenvolvimento</div>} />
+          <Route path="/relatorios" element={<div className="p-6">Página de Relatórios em desenvolvimento</div>} />
+          <Route path="/configuracoes" element={<div className="p-6">Página de Configurações em desenvolvimento</div>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

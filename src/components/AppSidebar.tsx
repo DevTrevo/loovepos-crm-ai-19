@@ -20,7 +20,10 @@ import {
   Package,
   Settings,
   BarChart3,
-  UserCircle
+  UserCircle,
+  Truck,
+  Tags,
+  Boxes
 } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
@@ -50,11 +53,32 @@ const menuItems = [
     url: "/ligacoes",
     icon: Phone,
   },
+];
+
+const inventoryItems = [
   {
     title: "Produtos",
     url: "/produtos",
     icon: Package,
   },
+  {
+    title: "Categorias",
+    url: "/categorias",
+    icon: Tags,
+  },
+  {
+    title: "Fornecedores",
+    url: "/fornecedores",
+    icon: Truck,
+  },
+  {
+    title: "Estoque",
+    url: "/estoque",
+    icon: Boxes,
+  },
+];
+
+const reportItems = [
   {
     title: "Relatórios",
     url: "/relatorios",
@@ -85,6 +109,50 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === item.url}
+                    className="w-full"
+                  >
+                    <Link to={item.url} className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors">
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Estoque</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {inventoryItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === item.url}
+                    className="w-full"
+                  >
+                    <Link to={item.url} className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors">
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Relatórios</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {reportItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 
