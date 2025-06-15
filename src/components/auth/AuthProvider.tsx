@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,6 +42,7 @@ export interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
+  companyError?: string | null;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,6 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
+  const [companyError, setCompanyError] = useState<string | null>(null);
   const { toast } = useToast();
 
   console.log('AuthProvider state:', { user: !!user, profile: !!profile, company: !!company, loading });
@@ -94,14 +97,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
 
       if (profileError) {
-        console.error('Error loading profile:', profileError);
+        setCompanyError('Erro ao carregar perfil do usuário.');
         throw profileError;
       }
 
-      console.log('Profile loaded:', profileData);
       setProfile(profileData);
 
-      // Carregar dados da empresa através da tabela company_users
+      // Buscar vínculo na company_users
       const { data: companyUserData, error: companyUserError } = await supabase
         .from('company_users')
         .select(`
@@ -115,12 +117,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
 
       if (companyUserError) {
-        console.error('Error loading company user data:', companyUserError);
-        
         // Se não encontrar na tabela company_users, tentar através do profile
         if (profileData?.company_id) {
-          console.log('Trying to load company via profile company_id:', profileData.company_id);
-          
           const { data: companyData, error: companyError } = await supabase
             .from('companies')
             .select('*')
@@ -128,22 +126,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             .single();
 
           if (companyError) {
-            console.error('Error loading company via profile:', companyError);
+            setCompanyError('Não foi possível carregar os dados da empresa do perfil.');
             throw new Error('Não foi possível carregar os dados da empresa');
           }
 
-          console.log('Company loaded via profile:', companyData);
           setCompany(companyData);
+          setCompanyError(null);
         } else {
-          throw new Error('Usuário não está associado a nenhuma empresa');
+          setCompany(null);
+          setCompanyError('Usuário não está vinculado a nenhuma empresa ativa. Solicite ao administrador para adicionar você a uma empresa.');
         }
       } else {
-        console.log('Company user data loaded:', companyUserData);
         setCompany(companyUserData.companies);
+        setCompanyError(null);
       }
 
-    } catch (error) {
-      console.error('Error in loadUserData:', error);
+    } catch (error: any) {
+      setCompany(null);
+      if (!companyError) setCompanyError('Erro ao carregar dados de empresa. Faça logout e login novamente ou solicite suporte administrativo.');
       toast({
         title: "Erro de autenticação",
         description: "Erro ao carregar dados do usuário. Tente fazer login novamente.",
@@ -158,7 +158,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const { data: { user: currentUser }, error } = await supabase.auth.getUser();
         if (error) {
-          console.error('Erro ao obter usuário atual:', error);
           setLoading(false);
           return;
         }
@@ -172,11 +171,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
     checkUser();
 
-    // Listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user);
       if (event === 'SIGNED_IN' && session?.user) {
-        // Adiar para evitar deadlock
         setTimeout(async () => {
           setUser(session.user);
           await loadUserData(session.user);
@@ -185,8 +181,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         setProfile(null);
         setCompany(null);
+        setCompanyError(null);
         cleanupAuthState();
-        // Sempre recarregar contexto
         window.location.href = "/auth";
       }
       setLoading(false);
@@ -221,10 +217,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loading,
     signOut,
     hasPermission,
+    companyError,
   };
 
   return (
     <AuthContext.Provider value={value}>
+      {companyError ? (
+        <div className="fixed top-20 left-1/2 z-50 -translate-x-1/2 bg-red-100 text-red-800 px-6 py-4 rounded shadow font-semibold border border-red-300">
+          {companyError}
+        </div>
+      ) : null}
       {children}
     </AuthContext.Provider>
   );
