@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { cleanupAuthState } from "@/utils/cleanupAuthState";
 
 interface Company {
   id: string;
@@ -52,6 +53,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   console.log('AuthProvider state:', { user: !!user, profile: !!profile, company: !!company, loading });
+
+  // Ref: https://docs.lovable.dev/tips-tricks/auth-limbo
+  const robustSignOut = async () => {
+    try {
+      cleanupAuthState();
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {}
+      setUser(null);
+      setProfile(null);
+      setCompany(null);
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      });
+      // Recarrega a página para forçar contexto limpo
+      window.location.href = "/auth";
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao fazer logout.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const signOut = robustSignOut;
 
   const loadUserData = async (currentUser: User) => {
     try {
@@ -124,73 +153,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Verificar usuário atual
+    // Verificar usuário atual ao iniciar
     const checkUser = async () => {
       try {
         const { data: { user: currentUser }, error } = await supabase.auth.getUser();
-        
         if (error) {
-          console.error('Error getting current user:', error);
+          console.error('Erro ao obter usuário atual:', error);
           setLoading(false);
           return;
         }
-
-        console.log('Current user:', currentUser);
         setUser(currentUser);
-
-        if (currentUser) {
-          await loadUserData(currentUser);
-        }
+        if (currentUser) await loadUserData(currentUser);
       } catch (error) {
-        console.error('Error in checkUser:', error);
+        console.error('Erro no checkUser:', error);
       } finally {
         setLoading(false);
       }
     };
-
     checkUser();
 
     // Listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user);
-      
       if (event === 'SIGNED_IN' && session?.user) {
-        setUser(session.user);
-        await loadUserData(session.user);
+        // Adiar para evitar deadlock
+        setTimeout(async () => {
+          setUser(session.user);
+          await loadUserData(session.user);
+        }, 0);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
         setCompany(null);
+        cleanupAuthState();
+        // Sempre recarregar contexto
+        window.location.href = "/auth";
       }
-      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      setUser(null);
-      setProfile(null);
-      setCompany(null);
-      
-      toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado com sucesso.",
-      });
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao fazer logout.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const hasPermission = (permission: string): boolean => {
     // For now, return true for basic permissions if user has a profile
