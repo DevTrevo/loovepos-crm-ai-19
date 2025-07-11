@@ -637,6 +637,44 @@ export type Database = {
         }
         Relationships: []
       }
+      price_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_price: number
+          old_price: number
+          product_id: string
+          reason: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_price: number
+          old_price: number
+          product_id: string
+          reason?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_price?: number
+          old_price?: number
+          product_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           barcode: string | null
@@ -1249,6 +1287,15 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_sales_report: {
+        Args: { start_date?: string; end_date?: string }
+        Returns: {
+          total_sales: number
+          total_orders: number
+          avg_order_value: number
+          top_products: Json
+        }[]
       }
       get_user_company_id: {
         Args: Record<PropertyKey, never>
