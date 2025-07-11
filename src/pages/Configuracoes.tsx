@@ -4,14 +4,12 @@ import { useSystemSettings, useUpdateSystemSetting } from "@/hooks/useSystemSett
 import { Header } from "@/components/layout/Header";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Store, Mail, Bell, Shield, Database } from "lucide-react";
+import { Settings, Store, Mail, Bell, Shield, Database, Users } from "lucide-react";
+import { SettingsCard, SettingField } from "@/components/settings/SettingsCard";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
+import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { SystemMaintenanceSettings } from "@/components/settings/SystemMaintenanceSettings";
 import { useToast } from "@/hooks/use-toast";
 
 const Configuracoes = () => {
@@ -77,7 +75,7 @@ const Configuracoes = () => {
             </div>
 
             <Tabs defaultValue="geral" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="geral" className="flex items-center gap-2">
                   <Settings className="w-4 h-4" />
                   Geral
@@ -94,6 +92,10 @@ const Configuracoes = () => {
                   <Bell className="w-4 h-4" />
                   Notificações
                 </TabsTrigger>
+                <TabsTrigger value="seguranca" className="flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Segurança
+                </TabsTrigger>
                 <TabsTrigger value="sistema" className="flex items-center gap-2">
                   <Database className="w-4 h-4" />
                   Sistema
@@ -101,316 +103,154 @@ const Configuracoes = () => {
               </TabsList>
 
               <TabsContent value="geral">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações Gerais</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="app_name">Nome do Sistema</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="app_name"
-                            value={getSettingValue('app_name')}
-                            onChange={(e) => handleSettingChange('app_name', e.target.value)}
-                            placeholder="LoovePOS"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('app_name') || '', 'app_name')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
+                <SettingsCard 
+                  title="Configurações Gerais"
+                  description="Configure as informações básicas do sistema"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <SettingField
+                      label="Nome do Sistema"
+                      value={getSettingValue('app_name')}
+                      onChange={(value) => handleSettingChange('app_name', value)}
+                      onSave={() => handleSaveSetting(getSettingId('app_name') || '', 'app_name')}
+                      placeholder="LoovePOS"
+                    />
 
-                      <div className="space-y-2">
-                        <Label htmlFor="timezone">Fuso Horário</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="timezone"
-                            value={getSettingValue('timezone')}
-                            onChange={(e) => handleSettingChange('timezone', e.target.value)}
-                            placeholder="America/Sao_Paulo"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('timezone') || '', 'timezone')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
+                    <SettingField
+                      label="Fuso Horário"
+                      value={getSettingValue('timezone')}
+                      onChange={(value) => handleSettingChange('timezone', value)}
+                      onSave={() => handleSaveSetting(getSettingId('timezone') || '', 'timezone')}
+                      placeholder="America/Sao_Paulo"
+                    />
 
-                      <div className="space-y-2">
-                        <Label htmlFor="currency">Moeda</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="currency"
-                            value={getSettingValue('currency')}
-                            onChange={(e) => handleSettingChange('currency', e.target.value)}
-                            placeholder="BRL"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('currency') || '', 'currency')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
+                    <SettingField
+                      label="Moeda"
+                      value={getSettingValue('currency')}
+                      onChange={(value) => handleSettingChange('currency', value)}
+                      onSave={() => handleSaveSetting(getSettingId('currency') || '', 'currency')}
+                      placeholder="BRL"
+                    />
 
-                      <div className="space-y-2">
-                        <Label htmlFor="language">Idioma</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="language"
-                            value={getSettingValue('language')}
-                            onChange={(e) => handleSettingChange('language', e.target.value)}
-                            placeholder="pt-BR"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('language') || '', 'language')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <SettingField
+                      label="Idioma"
+                      value={getSettingValue('language')}
+                      onChange={(value) => handleSettingChange('language', value)}
+                      onSave={() => handleSaveSetting(getSettingId('language') || '', 'language')}
+                      placeholder="pt-BR"
+                    />
+                  </div>
+                </SettingsCard>
               </TabsContent>
 
               <TabsContent value="loja">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Informações da Loja</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
+                <SettingsCard 
+                  title="Informações da Loja"
+                  description="Configure os dados da sua empresa"
+                >
+                  <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="store_name">Nome da Loja</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="store_name"
-                            value={getSettingValue('store_name')}
-                            onChange={(e) => handleSettingChange('store_name', e.target.value)}
-                            placeholder="Minha Loja"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('store_name') || '', 'store_name')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
+                      <SettingField
+                        label="Nome da Loja"
+                        value={getSettingValue('store_name')}
+                        onChange={(value) => handleSettingChange('store_name', value)}
+                        onSave={() => handleSaveSetting(getSettingId('store_name') || '', 'store_name')}
+                        placeholder="Minha Loja"
+                      />
 
-                      <div className="space-y-2">
-                        <Label htmlFor="store_phone">Telefone</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="store_phone"
-                            value={getSettingValue('store_phone')}
-                            onChange={(e) => handleSettingChange('store_phone', e.target.value)}
-                            placeholder="(11) 99999-9999"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('store_phone') || '', 'store_phone')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
+                      <SettingField
+                        label="Telefone"
+                        value={getSettingValue('store_phone')}
+                        onChange={(value) => handleSettingChange('store_phone', value)}
+                        onSave={() => handleSaveSetting(getSettingId('store_phone') || '', 'store_phone')}
+                        type="tel"
+                        placeholder="(11) 99999-9999"
+                      />
 
-                      <div className="space-y-2">
-                        <Label htmlFor="store_email">Email</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="store_email"
-                            type="email"
-                            value={getSettingValue('store_email')}
-                            onChange={(e) => handleSettingChange('store_email', e.target.value)}
-                            placeholder="contato@minhaloja.com"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('store_email') || '', 'store_email')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
+                      <SettingField
+                        label="Email"
+                        value={getSettingValue('store_email')}
+                        onChange={(value) => handleSettingChange('store_email', value)}
+                        onSave={() => handleSaveSetting(getSettingId('store_email') || '', 'store_email')}
+                        type="email"
+                        placeholder="contato@minhaloja.com"
+                      />
 
-                      <div className="space-y-2">
-                        <Label htmlFor="store_cnpj">CNPJ</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="store_cnpj"
-                            value={getSettingValue('store_cnpj')}
-                            onChange={(e) => handleSettingChange('store_cnpj', e.target.value)}
-                            placeholder="00.000.000/0000-00"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('store_cnpj') || '', 'store_cnpj')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
+                      <SettingField
+                        label="CNPJ"
+                        value={getSettingValue('store_cnpj')}
+                        onChange={(value) => handleSettingChange('store_cnpj', value)}
+                        onSave={() => handleSaveSetting(getSettingId('store_cnpj') || '', 'store_cnpj')}
+                        placeholder="00.000.000/0000-00"
+                      />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="store_address">Endereço</Label>
-                      <div className="flex gap-2">
-                        <Textarea
-                          id="store_address"
-                          value={getSettingValue('store_address')}
-                          onChange={(e) => handleSettingChange('store_address', e.target.value)}
-                          placeholder="Endereço completo da loja"
-                        />
-                        <Button 
-                          onClick={() => handleSaveSetting(getSettingId('store_address') || '', 'store_address')}
-                          size="sm"
-                        >
-                          Salvar
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <SettingField
+                      label="Endereço"
+                      value={getSettingValue('store_address')}
+                      onChange={(value) => handleSettingChange('store_address', value)}
+                      onSave={() => handleSaveSetting(getSettingId('store_address') || '', 'store_address')}
+                      type="textarea"
+                      placeholder="Endereço completo da loja"
+                    />
+                  </div>
+                </SettingsCard>
               </TabsContent>
 
               <TabsContent value="email">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações de Email</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="smtp_host">Servidor SMTP</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="smtp_host"
-                            value={getSettingValue('smtp_host')}
-                            onChange={(e) => handleSettingChange('smtp_host', e.target.value)}
-                            placeholder="smtp.gmail.com"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('smtp_host') || '', 'smtp_host')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
+                <SettingsCard 
+                  title="Configurações de Email"
+                  description="Configure o servidor de email para envio de notificações"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <SettingField
+                      label="Servidor SMTP"
+                      value={getSettingValue('smtp_host')}
+                      onChange={(value) => handleSettingChange('smtp_host', value)}
+                      onSave={() => handleSaveSetting(getSettingId('smtp_host') || '', 'smtp_host')}
+                      placeholder="smtp.gmail.com"
+                    />
 
-                      <div className="space-y-2">
-                        <Label htmlFor="smtp_port">Porta SMTP</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="smtp_port"
-                            value={getSettingValue('smtp_port')}
-                            onChange={(e) => handleSettingChange('smtp_port', e.target.value)}
-                            placeholder="587"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('smtp_port') || '', 'smtp_port')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <SettingField
+                      label="Porta SMTP"
+                      value={getSettingValue('smtp_port')}
+                      onChange={(value) => handleSettingChange('smtp_port', value)}
+                      onSave={() => handleSaveSetting(getSettingId('smtp_port') || '', 'smtp_port')}
+                      type="number"
+                      placeholder="587"
+                    />
+
+                    <SettingField
+                      label="Usuário SMTP"
+                      value={getSettingValue('smtp_user')}
+                      onChange={(value) => handleSettingChange('smtp_user', value)}
+                      onSave={() => handleSaveSetting(getSettingId('smtp_user') || '', 'smtp_user')}
+                      type="email"
+                      placeholder="seu-email@gmail.com"
+                    />
+
+                    <SettingField
+                      label="Senha SMTP"
+                      value={getSettingValue('smtp_password')}
+                      onChange={(value) => handleSettingChange('smtp_password', value)}
+                      onSave={() => handleSaveSetting(getSettingId('smtp_password') || '', 'smtp_password')}
+                      type="text"
+                      placeholder="Senha do email"
+                    />
+                  </div>
+                </SettingsCard>
               </TabsContent>
 
               <TabsContent value="notificacoes">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações de Notificações</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Notificar estoque baixo</Label>
-                          <p className="text-sm text-gray-600">Receber alertas quando produtos estiverem com estoque baixo</p>
-                        </div>
-                        <Switch defaultChecked />
-                      </div>
+                <NotificationSettings />
+              </TabsContent>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Notificar novas vendas</Label>
-                          <p className="text-sm text-gray-600">Receber notificações de novas vendas realizadas</p>
-                        </div>
-                        <Switch defaultChecked />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Email de relatórios</Label>
-                          <p className="text-sm text-gray-600">Receber relatórios periódicos por email</p>
-                        </div>
-                        <Switch />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <TabsContent value="seguranca">
+                <SecuritySettings />
               </TabsContent>
 
               <TabsContent value="sistema">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações do Sistema</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Modo de desenvolvimento</Label>
-                          <p className="text-sm text-gray-600">Ativar logs detalhados e ferramentas de debug</p>
-                        </div>
-                        <Switch />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Backup automático</Label>
-                          <p className="text-sm text-gray-600">Realizar backup automático dos dados diariamente</p>
-                        </div>
-                        <Switch defaultChecked />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="max_login_attempts">Máximo de tentativas de login</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="max_login_attempts"
-                            type="number"
-                            value={getSettingValue('max_login_attempts')}
-                            onChange={(e) => handleSettingChange('max_login_attempts', e.target.value)}
-                            placeholder="5"
-                          />
-                          <Button 
-                            onClick={() => handleSaveSetting(getSettingId('max_login_attempts') || '', 'max_login_attempts')}
-                            size="sm"
-                          >
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <SystemMaintenanceSettings />
               </TabsContent>
             </Tabs>
           </div>
