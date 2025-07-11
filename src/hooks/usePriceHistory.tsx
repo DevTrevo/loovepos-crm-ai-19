@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -15,32 +16,32 @@ export const usePriceHistory = (productId?: string) => {
   return useQuery({
     queryKey: ['price-history', productId],
     queryFn: async () => {
-      // Use raw SQL query since the table might not be in generated types yet
-      const query = productId 
-        ? `SELECT * FROM price_history WHERE product_id = $1 ORDER BY created_at DESC`
-        : `SELECT * FROM price_history ORDER BY created_at DESC`;
+      console.log('Fetching price history for product:', productId);
       
-      const params = productId ? [productId] : [];
-      
-      const { data, error } = await supabase.rpc('exec_sql', {
-        query,
-        params
-      });
-      
-      if (error) {
-        // Fallback to direct table access if exec_sql doesn't exist
-        console.log('Trying direct table access for price_history');
-        const { data: directData, error: directError } = await supabase
-          .from('price_history' as any)
+      try {
+        let query = supabase
+          .from('price_history')
           .select('*')
-          .eq(productId ? 'product_id' : 'id', productId || '')
           .order('created_at', { ascending: false });
         
-        if (directError) throw directError;
-        return (directData || []) as PriceHistoryEntry[];
+        if (productId) {
+          query = query.eq('product_id', productId);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error('Error fetching price history:', error);
+          throw error;
+        }
+        
+        console.log('Price history data:', data);
+        return (data || []) as PriceHistoryEntry[];
+      } catch (error) {
+        console.error('Price history query failed:', error);
+        // Return empty array as fallback
+        return [] as PriceHistoryEntry[];
       }
-      
-      return (data || []) as PriceHistoryEntry[];
     },
   });
 };

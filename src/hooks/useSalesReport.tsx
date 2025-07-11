@@ -19,15 +19,37 @@ export const useSalesReport = (startDate?: string, endDate?: string) => {
       try {
         console.log('Fetching sales report for period:', startDate, 'to', endDate);
         
-        // Return default structure for now - this will work once the function is available
-        const defaultData: SalesReportData = {
+        // Use the get_sales_report function that exists in the database
+        const { data, error } = await supabase.rpc('get_sales_report', {
+          start_date: startDate,
+          end_date: endDate
+        });
+        
+        if (error) {
+          console.error('Error fetching sales report:', error);
+          throw error;
+        }
+        
+        console.log('Sales report data:', data);
+        
+        // Transform the data to match our interface
+        if (data && data.length > 0) {
+          const reportData = data[0];
+          return {
+            total_sales: reportData.total_sales || 0,
+            total_orders: reportData.total_orders || 0,
+            avg_order_value: reportData.avg_order_value || 0,
+            top_products: reportData.top_products || []
+          } as SalesReportData;
+        }
+        
+        // Return default structure if no data
+        return {
           total_sales: 0,
           total_orders: 0,
           avg_order_value: 0,
           top_products: []
-        };
-        
-        return defaultData;
+        } as SalesReportData;
       } catch (error) {
         console.error('Error fetching sales report:', error);
         return {
@@ -35,7 +57,7 @@ export const useSalesReport = (startDate?: string, endDate?: string) => {
           total_orders: 0,
           avg_order_value: 0,
           top_products: []
-        };
+        } as SalesReportData;
       }
     },
     enabled: true,
