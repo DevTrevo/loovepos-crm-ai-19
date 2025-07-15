@@ -5,11 +5,12 @@ import { Header } from "@/components/layout/Header";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Store, Mail, Bell, Shield, Database, Users } from "lucide-react";
+import { Settings, Store, Mail, Bell, Shield, Database, Activity } from "lucide-react";
 import { SettingsCard, SettingField } from "@/components/settings/SettingsCard";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
-import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { SecuritySettings } from "@/components/security/SecuritySettings";
 import { SystemMaintenanceSettings } from "@/components/settings/SystemMaintenanceSettings";
+import { SecurityDashboard } from "@/components/security/SecurityDashboard";
 import { useToast } from "@/hooks/use-toast";
 
 const Configuracoes = () => {
@@ -75,7 +76,7 @@ const Configuracoes = () => {
             </div>
 
             <Tabs defaultValue="geral" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="geral" className="flex items-center gap-2">
                   <Settings className="w-4 h-4" />
                   Geral
@@ -99,6 +100,10 @@ const Configuracoes = () => {
                 <TabsTrigger value="sistema" className="flex items-center gap-2">
                   <Database className="w-4 h-4" />
                   Sistema
+                </TabsTrigger>
+                <TabsTrigger value="auditoria" className="flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  Auditoria
                 </TabsTrigger>
               </TabsList>
 
@@ -234,7 +239,7 @@ const Configuracoes = () => {
                       value={getSettingValue('smtp_password')}
                       onChange={(value) => handleSettingChange('smtp_password', value)}
                       onSave={() => handleSaveSetting(getSettingId('smtp_password') || '', 'smtp_password')}
-                      type="text"
+                      type="password"
                       placeholder="Senha do email"
                     />
                   </div>
@@ -251,6 +256,10 @@ const Configuracoes = () => {
 
               <TabsContent value="sistema">
                 <SystemMaintenanceSettings />
+              </TabsContent>
+
+              <TabsContent value="auditoria">
+                <SecurityDashboard />
               </TabsContent>
             </Tabs>
           </div>

@@ -14,6 +14,8 @@ export const NotificationSettings = () => {
     new_sales_notifications: false,
     email_reports: false,
     system_alerts: true,
+    security_alerts: true,
+    backup_notifications: true,
   });
 
   useEffect(() => {
@@ -46,51 +48,73 @@ export const NotificationSettings = () => {
   };
 
   return (
-    <SettingsCard 
-      title="Configurações de Notificações"
-      description="Gerencie como e quando você recebe notificações do sistema"
-    >
-      <div className="space-y-4">
-        <SettingSwitch
-          label="Alertas de estoque baixo"
-          description="Receber notificações quando produtos estiverem com estoque baixo"
-          checked={notificationSettings.low_stock_alerts}
-          onChange={(checked) => 
-            setNotificationSettings(prev => ({ ...prev, low_stock_alerts: checked }))
-          }
-          onSave={() => handleSaveSetting('low_stock_alerts', notificationSettings.low_stock_alerts)}
-        />
+    <div className="space-y-6">
+      <SettingsCard 
+        title="Configurações de Notificações"
+        description="Gerencie como e quando você recebe notificações do sistema"
+      >
+        <div className="space-y-4">
+          <SettingSwitch
+            label="Alertas de estoque baixo"
+            description="Receber notificações quando produtos estiverem com estoque baixo"
+            checked={notificationSettings.low_stock_alerts}
+            onChange={(checked) => 
+              setNotificationSettings(prev => ({ ...prev, low_stock_alerts: checked }))
+            }
+            onSave={() => handleSaveSetting('low_stock_alerts', notificationSettings.low_stock_alerts)}
+          />
 
-        <SettingSwitch
-          label="Notificações de novas vendas"
-          description="Receber alertas quando novas vendas forem realizadas"
-          checked={notificationSettings.new_sales_notifications}
-          onChange={(checked) => 
-            setNotificationSettings(prev => ({ ...prev, new_sales_notifications: checked }))
-          }
-          onSave={() => handleSaveSetting('new_sales_notifications', notificationSettings.new_sales_notifications)}
-        />
+          <SettingSwitch
+            label="Notificações de novas vendas"
+            description="Receber alertas quando novas vendas forem realizadas"
+            checked={notificationSettings.new_sales_notifications}
+            onChange={(checked) => 
+              setNotificationSettings(prev => ({ ...prev, new_sales_notifications: checked }))
+            }
+            onSave={() => handleSaveSetting('new_sales_notifications', notificationSettings.new_sales_notifications)}
+          />
 
-        <SettingSwitch
-          label="Relatórios por email"
-          description="Receber relatórios periódicos por email"
-          checked={notificationSettings.email_reports}
-          onChange={(checked) => 
-            setNotificationSettings(prev => ({ ...prev, email_reports: checked }))
-          }
-          onSave={() => handleSaveSetting('email_reports', notificationSettings.email_reports)}
-        />
+          <SettingSwitch
+            label="Relatórios por email"
+            description="Receber relatórios periódicos por email"
+            checked={notificationSettings.email_reports}
+            onChange={(checked) => 
+              setNotificationSettings(prev => ({ ...prev, email_reports: checked }))
+            }
+            onSave={() => handleSaveSetting('email_reports', notificationSettings.email_reports)}
+          />
 
-        <SettingSwitch
-          label="Alertas do sistema"
-          description="Receber notificações sobre atualizações e manutenções do sistema"
-          checked={notificationSettings.system_alerts}
-          onChange={(checked) => 
-            setNotificationSettings(prev => ({ ...prev, system_alerts: checked }))
-          }
-          onSave={() => handleSaveSetting('system_alerts', notificationSettings.system_alerts)}
-        />
-      </div>
-    </SettingsCard>
+          <SettingSwitch
+            label="Alertas do sistema"
+            description="Receber notificações sobre atualizações e manutenções do sistema"
+            checked={notificationSettings.system_alerts}
+            onChange={(checked) => 
+              setNotificationSettings(prev => ({ ...prev, system_alerts: checked }))
+            }
+            onSave={() => handleSaveSetting('system_alerts', notificationSettings.system_alerts)}
+          />
+
+          <SettingSwitch
+            label="Alertas de segurança"
+            description="Receber notificações sobre eventos de segurança importantes"
+            checked={notificationSettings.security_alerts}
+            onChange={(checked) => 
+              setNotificationSettings(prev => ({ ...prev, security_alerts: checked }))
+            }
+            onSave={() => handleSaveSetting('security_alerts', notificationSettings.security_alerts)}
+          />
+
+          <SettingSwitch
+            label="Notificações de backup"
+            description="Receber alertas sobre status de backups e manutenções"
+            checked={notificationSettings.backup_notifications}
+            onChange={(checked) => 
+              setNotificationSettings(prev => ({ ...prev, backup_notifications: checked }))
+            }
+            onSave={() => handleSaveSetting('backup_notifications', notificationSettings.backup_notifications)}
+          />
+        </div>
+      </SettingsCard>
+    </div>
   );
 };

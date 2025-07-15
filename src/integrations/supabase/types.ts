@@ -1293,17 +1293,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
       get_sales_report: {
-        Args: { start_date?: string; end_date?: string }
+        Args:
+          | { start_date?: string; end_date?: string }
+          | {
+              start_date?: string
+              end_date?: string
+              company_id_param?: string
+            }
         Returns: {
           total_sales: number
           total_orders: number
           avg_order_value: number
           top_products: Json
+          sales_by_day: Json
+          payment_methods: Json
         }[]
       }
       get_user_company_id: {
@@ -1312,6 +1324,14 @@ export type Database = {
       }
       user_has_permission: {
         Args: { permission_name: string }
+        Returns: boolean
+      }
+      validate_user_permission: {
+        Args: {
+          user_id_param: string
+          permission_name: string
+          company_id_param?: string
+        }
         Returns: boolean
       }
     }
