@@ -758,40 +758,49 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string
+          dark_mode: boolean | null
           full_name: string | null
           id: string
           is_active: boolean | null
           last_login: string | null
+          notifications: boolean | null
           permissions: Json | null
           phone: string | null
           position: string | null
           role: string | null
+          sound_effects: boolean | null
           updated_at: string
         }
         Insert: {
           company_id?: string | null
           created_at?: string
+          dark_mode?: boolean | null
           full_name?: string | null
           id: string
           is_active?: boolean | null
           last_login?: string | null
+          notifications?: boolean | null
           permissions?: Json | null
           phone?: string | null
           position?: string | null
           role?: string | null
+          sound_effects?: boolean | null
           updated_at?: string
         }
         Update: {
           company_id?: string | null
           created_at?: string
+          dark_mode?: boolean | null
           full_name?: string | null
           id?: string
           is_active?: boolean | null
           last_login?: string | null
+          notifications?: boolean | null
           permissions?: Json | null
           phone?: string | null
           position?: string | null
           role?: string | null
+          sound_effects?: boolean | null
           updated_at?: string
         }
         Relationships: [
