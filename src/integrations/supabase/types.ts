@@ -352,6 +352,60 @@ export type Database = {
         }
         Relationships: []
       }
+      company_security_settings: {
+        Row: {
+          allowed_devices: number | null
+          auto_logout_inactive: boolean | null
+          company_id: string
+          created_at: string
+          id: string
+          ip_whitelist: Json | null
+          lockout_duration: number | null
+          max_login_attempts: number | null
+          minimum_password_length: number | null
+          require_numbers: boolean | null
+          require_password_change_days: number | null
+          require_special_chars: boolean | null
+          session_timeout: number | null
+          two_factor_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          allowed_devices?: number | null
+          auto_logout_inactive?: boolean | null
+          company_id: string
+          created_at?: string
+          id?: string
+          ip_whitelist?: Json | null
+          lockout_duration?: number | null
+          max_login_attempts?: number | null
+          minimum_password_length?: number | null
+          require_numbers?: boolean | null
+          require_password_change_days?: number | null
+          require_special_chars?: boolean | null
+          session_timeout?: number | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          allowed_devices?: number | null
+          auto_logout_inactive?: boolean | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          ip_whitelist?: Json | null
+          lockout_duration?: number | null
+          max_login_attempts?: number | null
+          minimum_password_length?: number | null
+          require_numbers?: boolean | null
+          require_password_change_days?: number | null
+          require_special_chars?: boolean | null
+          session_timeout?: number | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       company_users: {
         Row: {
           company_id: string
@@ -548,6 +602,36 @@ export type Database = {
           title?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          attempt_time: string
+          email: string
+          failure_reason: string | null
+          id: string
+          ip_address: unknown | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          attempt_time?: string
+          email: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: unknown | null
+          success: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          attempt_time?: string
+          email?: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: unknown | null
+          success?: boolean
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -918,6 +1002,33 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          permissions: Json
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          permissions?: Json
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          permissions?: Json
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sale_items: {
         Row: {
           created_at: string
@@ -1016,6 +1127,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_sessions: {
+        Row: {
+          company_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: unknown | null
+          is_active: boolean | null
+          last_activity: string | null
+          session_token: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          last_activity?: string | null
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          last_activity?: string | null
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       stock_movements: {
         Row: {
@@ -1321,6 +1471,20 @@ export type Database = {
       get_user_company_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      is_user_locked: {
+        Args: { user_email: string; user_ip: unknown }
+        Returns: boolean
+      }
+      log_login_attempt: {
+        Args: {
+          user_email: string
+          user_ip: unknown
+          user_agent_str: string
+          is_success: boolean
+          fail_reason?: string
+        }
+        Returns: undefined
       }
       user_has_permission: {
         Args: { permission_name: string }
