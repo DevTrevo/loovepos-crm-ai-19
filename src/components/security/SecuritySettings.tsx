@@ -1,7 +1,8 @@
 
 import { useState } from "react";
 import { useSystemSettings, useUpdateSystemSetting } from "@/hooks/useSystemSettings";
-import { SettingsCard, SettingField, SettingSwitch } from "./SettingsCard";
+import { SettingsCard, SettingField, SettingSwitch } from "@/components/settings/SettingsCard";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";

@@ -33,7 +33,7 @@ interface SettingFieldProps {
   value: string;
   onChange: (value: string) => void;
   onSave: () => void;
-  type?: 'text' | 'email' | 'tel' | 'number' | 'textarea';
+  type?: 'text' | 'email' | 'tel' | 'number' | 'textarea' | 'password';
   placeholder?: string;
   description?: string;
 }
