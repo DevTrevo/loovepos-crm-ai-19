@@ -103,7 +103,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setProfile(profileData);
 
-      // Buscar vínculo na company_users
+      // Primeiro verificar pelo company_id no profile
+      if (profileData?.company_id) {
+        const { data: companyData, error: companyError } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', profileData.company_id)
+          .single();
+
+        if (!companyError && companyData) {
+          setCompany(companyData);
+          setCompanyError(null);
+          return; // Sucesso, sair da função
+        }
+      }
+
+      // Se não conseguir pelo profile, buscar vínculo na company_users
       const { data: companyUserData, error: companyUserError } = await supabase
         .from('company_users')
         .select(`
@@ -116,29 +131,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('status', 'active')
         .single();
 
-      if (companyUserError) {
-        // Se não encontrar na tabela company_users, tentar através do profile
-        if (profileData?.company_id) {
-          const { data: companyData, error: companyError } = await supabase
-            .from('companies')
-            .select('*')
-            .eq('id', profileData.company_id)
-            .single();
-
-          if (companyError) {
-            setCompanyError('Não foi possível carregar os dados da empresa do perfil.');
-            throw new Error('Não foi possível carregar os dados da empresa');
-          }
-
-          setCompany(companyData);
-          setCompanyError(null);
-        } else {
-          setCompany(null);
-          setCompanyError('Usuário não está vinculado a nenhuma empresa ativa. Solicite ao administrador para adicionar você a uma empresa.');
-        }
-      } else {
+      if (!companyUserError && companyUserData?.companies) {
         setCompany(companyUserData.companies);
         setCompanyError(null);
+      } else {
+        setCompany(null);
+        setCompanyError('Usuário não está vinculado a nenhuma empresa ativa. Solicite ao administrador para adicionar você a uma empresa.');
       }
 
     } catch (error: any) {
