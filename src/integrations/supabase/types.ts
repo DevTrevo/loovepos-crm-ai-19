@@ -764,7 +764,7 @@ export type Database = {
           barcode: string | null
           category: string
           category_id: string | null
-          company_id: string | null
+          company_id: string
           cost_price: number | null
           created_at: string
           description: string | null
@@ -782,7 +782,7 @@ export type Database = {
           barcode?: string | null
           category: string
           category_id?: string | null
-          company_id?: string | null
+          company_id: string
           cost_price?: number | null
           created_at?: string
           description?: string | null
@@ -800,7 +800,7 @@ export type Database = {
           barcode?: string | null
           category?: string
           category_id?: string | null
-          company_id?: string | null
+          company_id?: string
           cost_price?: number | null
           created_at?: string
           description?: string | null
