@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Package, Trash2 } from "lucide-react";
-import { Product, useUpdateProduct } from "@/hooks/useProducts";
+import { Product, useDeleteProduct } from "@/hooks/useProducts";
 import { EditProductDialog } from "./EditProductDialog";
 import {
   AlertDialog,
@@ -24,14 +24,11 @@ interface ProductsTableProps {
 export function ProductsTable({ products }: ProductsTableProps) {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
-  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
 
   const handleDelete = async () => {
     if (deletingProduct) {
-      await updateProduct.mutateAsync({ 
-        id: deletingProduct.id, 
-        status: 'inactive' as const 
-      });
+      await deleteProduct.mutateAsync(deletingProduct.id);
       setDeletingProduct(null);
     }
   };
@@ -109,15 +106,15 @@ export function ProductsTable({ products }: ProductsTableProps) {
       <AlertDialog open={!!deletingProduct} onOpenChange={(open) => !open && setDeletingProduct(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar inativação</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja inativar o produto "{deletingProduct?.name}"? O produto será marcado como inativo mas os dados serão preservados.
+              Tem certeza que deseja excluir o produto "{deletingProduct?.name}"? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Inativar
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
