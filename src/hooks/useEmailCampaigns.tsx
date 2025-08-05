@@ -73,3 +73,66 @@ export const useCreateEmailCampaign = () => {
     },
   });
 };
+
+export const useUpdateEmailCampaign = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<EmailCampaign> }) => {
+      const { data, error } = await supabase
+        .from('email_campaigns')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-campaigns'] });
+      toast({
+        title: "Campanha atualizada",
+        description: "Campanha de email atualizada com sucesso!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar campanha: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useDeleteEmailCampaign = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('email_campaigns')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-campaigns'] });
+      toast({
+        title: "Campanha excluída",
+        description: "Campanha de email excluída com sucesso!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir campanha: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};

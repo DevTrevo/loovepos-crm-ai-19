@@ -18,58 +18,20 @@ import {
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
-
-interface Campaign {
-  id: number;
-  name: string;
-  subject: string;
-  status: 'draft' | 'sent' | 'scheduled';
-  sent: number;
-  opened: number;
-  clicked: number;
-  created: string;
-}
+import { useEmailCampaigns, useCreateEmailCampaign } from "@/hooks/useEmailCampaigns";
+import { EditCampaignDialog } from "@/components/email-marketing/EditCampaignDialog";
+import { DeleteCampaignDialog } from "@/components/email-marketing/DeleteCampaignDialog";
 
 const EmailMarketing = () => {
   const { toast } = useToast();
+  const { data: campaigns = [], isLoading } = useEmailCampaigns();
+  const createCampaign = useCreateEmailCampaign();
+  
   const [newCampaign, setNewCampaign] = useState({
     name: "",
     subject: "",
     content: ""
   });
-
-  const campaigns: Campaign[] = [
-    {
-      id: 1,
-      name: "Promoção Verão",
-      subject: "🏖️ Chegou o Verão! 20% OFF em todos os suplementos",
-      status: 'sent',
-      sent: 150,
-      opened: 75,
-      clicked: 23,
-      created: "2024-06-10"
-    },
-    {
-      id: 2,
-      name: "Clientes Inativos",
-      subject: "Sentimos sua falta! Volta aqui com 15% de desconto",
-      status: 'sent',
-      sent: 45,
-      opened: 18,
-      clicked: 7,
-      created: "2024-06-08"
-    },
-    {
-      id: 3,
-      name: "Novos Produtos",
-      subject: "🆕 Lançamentos imperdíveis chegaram!",
-      status: 'draft',
-      sent: 0,
-      opened: 0,
-      clicked: 0,
-      created: "2024-06-12"
-    }
-  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -89,7 +51,7 @@ const EmailMarketing = () => {
     }
   };
 
-  const createCampaign = () => {
+  const handleCreateCampaign = () => {
     if (!newCampaign.name || !newCampaign.subject || !newCampaign.content) {
       toast({
         title: "Campos obrigatórios",
@@ -99,13 +61,28 @@ const EmailMarketing = () => {
       return;
     }
 
-    toast({
-      title: "Campanha criada!",
-      description: `A campanha "${newCampaign.name}" foi criada com sucesso.`,
-    });
-
-    setNewCampaign({ name: "", subject: "", content: "" });
+    createCampaign.mutate(
+      {
+        name: newCampaign.name,
+        subject: newCampaign.subject,
+        content: newCampaign.content,
+        status: 'draft' as const,
+      },
+      {
+        onSuccess: () => {
+          setNewCampaign({ name: "", subject: "", content: "" });
+        },
+      }
+    );
   };
+
+  // Calculando métricas dos dados reais
+  const totalSent = campaigns.reduce((sum, campaign) => sum + (campaign.sent_count || 0), 0);
+  const totalOpened = campaigns.reduce((sum, campaign) => sum + (campaign.opened_count || 0), 0);
+  const totalClicked = campaigns.reduce((sum, campaign) => sum + (campaign.clicked_count || 0), 0);
+  const openRate = totalSent > 0 ? (totalOpened / totalSent) * 100 : 0;
+  const clickRate = totalSent > 0 ? (totalClicked / totalSent) * 100 : 0;
+  const activeCampaigns = campaigns.filter(c => c.status === 'draft').length;
 
   const aiSuggestions = [
     {
@@ -154,7 +131,7 @@ const EmailMarketing = () => {
                       <Send className="h-4 w-4 text-blue-600" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-blue-600">195</div>
+                      <div className="text-2xl font-bold text-blue-600">{totalSent}</div>
                       <p className="text-xs text-gray-600">Este mês</p>
                     </CardContent>
                   </Card>
@@ -165,8 +142,8 @@ const EmailMarketing = () => {
                       <Eye className="h-4 w-4 text-green-600" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-green-600">47.7%</div>
-                      <p className="text-xs text-gray-600">+2.1% vs mês anterior</p>
+                      <div className="text-2xl font-bold text-green-600">{openRate.toFixed(1)}%</div>
+                      <p className="text-xs text-gray-600">Taxa de abertura</p>
                     </CardContent>
                   </Card>
 
@@ -176,8 +153,8 @@ const EmailMarketing = () => {
                       <MousePointer className="h-4 w-4 text-purple-600" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-purple-600">15.4%</div>
-                      <p className="text-xs text-gray-600">+0.8% vs mês anterior</p>
+                      <div className="text-2xl font-bold text-purple-600">{clickRate.toFixed(1)}%</div>
+                      <p className="text-xs text-gray-600">Taxa de clique</p>
                     </CardContent>
                   </Card>
 
@@ -187,8 +164,8 @@ const EmailMarketing = () => {
                       <BarChart3 className="h-4 w-4 text-orange-600" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-orange-600">3</div>
-                      <p className="text-xs text-gray-600">2 enviadas, 1 rascunho</p>
+                      <div className="text-2xl font-bold text-orange-600">{campaigns.length}</div>
+                      <p className="text-xs text-gray-600">{activeCampaigns} rascunhos</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -202,45 +179,57 @@ const EmailMarketing = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {campaigns.map((campaign) => (
-                        <div key={campaign.id} className="p-4 border rounded-lg">
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <h3 className="font-medium text-lg">{campaign.name}</h3>
-                              <p className="text-gray-600">{campaign.subject}</p>
-                              <p className="text-sm text-gray-500">
-                                Criada em {new Date(campaign.created).toLocaleDateString('pt-BR')}
-                              </p>
+                    {isLoading ? (
+                      <div className="text-center py-8">Carregando campanhas...</div>
+                    ) : campaigns.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        Nenhuma campanha encontrada. Crie sua primeira campanha!
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {campaigns.map((campaign) => (
+                          <div key={campaign.id} className="p-4 border rounded-lg">
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex-1">
+                                <h3 className="font-medium text-lg">{campaign.name}</h3>
+                                <p className="text-gray-600">{campaign.subject}</p>
+                                <p className="text-sm text-gray-500">
+                                  Criada em {new Date(campaign.created_at).toLocaleDateString('pt-BR')}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge className={getStatusColor(campaign.status)}>
+                                  {getStatusLabel(campaign.status)}
+                                </Badge>
+                                <EditCampaignDialog campaign={campaign} />
+                                <DeleteCampaignDialog campaign={campaign} />
+                              </div>
                             </div>
-                            <Badge className={getStatusColor(campaign.status)}>
-                              {getStatusLabel(campaign.status)}
-                            </Badge>
+                            
+                            {campaign.status === 'sent' && (campaign.sent_count || 0) > 0 && (
+                              <div className="grid grid-cols-3 gap-4 mt-4">
+                                <div className="text-center">
+                                  <p className="text-sm text-gray-600">Enviados</p>
+                                  <p className="text-xl font-bold">{campaign.sent_count || 0}</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-sm text-gray-600">Abertos</p>
+                                  <p className="text-xl font-bold text-green-600">
+                                    {campaign.opened_count || 0} ({campaign.sent_count ? (((campaign.opened_count || 0) / campaign.sent_count) * 100).toFixed(1) : 0}%)
+                                  </p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-sm text-gray-600">Cliques</p>
+                                  <p className="text-xl font-bold text-purple-600">
+                                    {campaign.clicked_count || 0} ({campaign.sent_count ? (((campaign.clicked_count || 0) / campaign.sent_count) * 100).toFixed(1) : 0}%)
+                                  </p>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          
-                          {campaign.status === 'sent' && (
-                            <div className="grid grid-cols-3 gap-4 mt-4">
-                              <div className="text-center">
-                                <p className="text-sm text-gray-600">Enviados</p>
-                                <p className="text-xl font-bold">{campaign.sent}</p>
-                              </div>
-                              <div className="text-center">
-                                <p className="text-sm text-gray-600">Abertos</p>
-                                <p className="text-xl font-bold text-green-600">
-                                  {campaign.opened} ({((campaign.opened / campaign.sent) * 100).toFixed(1)}%)
-                                </p>
-                              </div>
-                              <div className="text-center">
-                                <p className="text-sm text-gray-600">Cliques</p>
-                                <p className="text-xl font-bold text-purple-600">
-                                  {campaign.clicked} ({((campaign.clicked / campaign.sent) * 100).toFixed(1)}%)
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -289,9 +278,9 @@ const EmailMarketing = () => {
                     </div>
 
                     <div className="flex gap-4">
-                      <Button onClick={createCampaign}>
+                      <Button onClick={handleCreateCampaign} disabled={createCampaign.isPending}>
                         <Send className="w-4 h-4 mr-2" />
-                        Criar Campanha
+                        {createCampaign.isPending ? "Criando..." : "Criar Campanha"}
                       </Button>
                       <Button variant="outline">
                         Salvar Rascunho
