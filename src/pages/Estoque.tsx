@@ -5,6 +5,7 @@ import { useStockMovements } from "@/hooks/useStockMovements";
 import { StockMovementForm } from "@/components/inventory/StockMovementForm";
 import { StockMovementsTable } from "@/components/inventory/StockMovementsTable";
 import { LowStockAlert } from "@/components/inventory/LowStockAlert";
+import { InventoryProductsTable } from "@/components/inventory/InventoryProductsTable";
 import { Header } from "@/components/layout/Header";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -12,17 +13,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search, Package, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 
 const Estoque = () => {
   const { data: products } = useProducts();
   const { data: movements, isLoading } = useStockMovements();
   const [searchTerm, setSearchTerm] = useState("");
+  const [productSearchTerm, setProductSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const filteredMovements = movements?.filter(movement =>
     movement.products?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     movement.reason.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredProducts = products?.filter(product =>
+    product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+    product.sku?.toLowerCase().includes(productSearchTerm.toLowerCase())
   );
 
   const activeProducts = products?.filter(p => p.status === 'active') || [];
@@ -113,27 +122,60 @@ const Estoque = () => {
 
             {lowStockCount > 0 && <LowStockAlert />}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Movimentações Recentes</CardTitle>
-                <div className="flex items-center space-x-2">
-                  <Search className="w-4 h-4 text-gray-500" />
-                  <Input
-                    placeholder="Buscar movimentações..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm"
-                  />
-                </div>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="text-center py-4">Carregando movimentações...</div>
-                ) : (
-                  <StockMovementsTable movements={filteredMovements || []} />
-                )}
-              </CardContent>
-            </Card>
+            <Tabs defaultValue="products" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="products">Produtos em Estoque</TabsTrigger>
+                <TabsTrigger value="movements">Movimentações</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="products" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Produtos em Estoque</CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Search className="w-4 h-4 text-gray-500" />
+                      <Input
+                        placeholder="Buscar produtos..."
+                        value={productSearchTerm}
+                        onChange={(e) => setProductSearchTerm(e.target.value)}
+                        className="max-w-sm"
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="text-center py-4">Carregando produtos...</div>
+                    ) : (
+                      <InventoryProductsTable products={filteredProducts || []} />
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="movements" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Movimentações Recentes</CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Search className="w-4 h-4 text-gray-500" />
+                      <Input
+                        placeholder="Buscar movimentações..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="max-w-sm"
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="text-center py-4">Carregando movimentações...</div>
+                    ) : (
+                      <StockMovementsTable movements={filteredMovements || []} />
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         </SidebarInset>
       </div>
